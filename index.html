@@ -271,15 +271,21 @@ async function ghApi(method, path, body) {
       'X-GitHub-Api-Version': '2022-11-28',
     }
   };
-  if (token) opts.headers['Authorization'] = `Bearer ${token}`;
+  if (token) {
+    // 尝试 Bearer 认证（新版 fine-grained token）
+    opts.headers['Authorization'] = `Bearer ${token}`;
+  }
   if (body) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
   }
   const res = await fetch(url, opts);
   if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    throw new Error(`${method} ${path}: ${res.status} ${errText.slice(0, 200)}`);
+    const errObj = await res.json().catch(() => null);
+    let errMsg = `${method} ${path}: ${res.status}`;
+    if (errObj && errObj.message) errMsg += ' ' + errObj.message;
+    if (errObj && errObj.documentation_url) errMsg += ' (' + errObj.documentation_url + ')';
+    throw new Error(errMsg);
   }
   if (method === 'HEAD') return res;
   return res.json();
@@ -330,7 +336,10 @@ async function testToken() {
   try {
     await ghApi('GET', '/user');
     return true;
-  } catch { return false; }
+  } catch {
+    // Fine-grained token 可能不支持 /user，返回 false
+    return false;
+  }
 }
 
 // ========== View Routing ==========
@@ -432,12 +441,13 @@ function renderAuthSetup() {
     <div class="auth-setup">
       <h2>🔑 配置 GitHub Token</h2>
       <ol>
-        <li>打开 <a href="https://github.com/settings/tokens?type=beta" target="_blank">GitHub Personal Access Tokens</a></li>
+        <li>打开 <a href="https://github.com/settings/tokens?type=beta" target="_blank">Fine-grained tokens</a> 页面</li>
         <li>点击 <strong>Generate new token</strong></li>
         <li>Token 名称随便填，比如 <em>blog</em></li>
         <li>过期时间选 <strong>No expiration</strong></li>
-        <li>勾选权限：<strong>repo</strong>（完整权限）</li>
-        <li>生成后复制 Token</li>
+        <li>Repository access 选 <strong>Only select repositories</strong>，选择 <strong>HNU</strong></li>
+        <li>Permissions → Contents: 选 <strong>Read and write</strong></li>
+        <li>点击 <strong>Generate token</strong>，复制 Token</li>
       </ol>
       <div class="token-input-row">
         <input type="password" id="token-input" placeholder="粘贴你的 GitHub Token..." value="${token}">
@@ -456,6 +466,8 @@ async function saveToken() {
   token = val;
   localStorage.setItem('gh_blog_token', token);
   showToast('正在验证...');
+
+  // 先测试能否访问 /user
   authenticated = await testToken();
   if (authenticated) {
     showToast('连接成功！正在加载帖子...');
@@ -467,10 +479,27 @@ async function saveToken() {
       render();
     }
   } else {
-    showToast('Token 无效，请检查');
-    localStorage.removeItem('gh_blog_token');
-    token = '';
-    render();
+    // 可能是 Fine-grained token 不支持 /user 端点，尝试直接访问仓库
+    showToast('正在尝试直接连接仓库...');
+    try {
+      await ghApi('GET', '/contents/README.md');
+      authenticated = true;
+      await loadPosts();
+      if (postsLoaded) {
+        currentView = 'home';
+        render();
+      } else {
+        showToast('Token 权限不足，请检查是否授予了 HNU 仓库的 Contents 读写权限');
+        localStorage.removeItem('gh_blog_token');
+        token = '';
+        render();
+      }
+    } catch (e) {
+      showToast('Token 无效或权限不足：' + e.message.split(':')[0]);
+      localStorage.removeItem('gh_blog_token');
+      token = '';
+      render();
+    }
   }
 }
 

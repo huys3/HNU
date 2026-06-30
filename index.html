@@ -971,15 +971,15 @@ async function uploadImageToRepo(file) {
       content: compressed.split(',')[1],
       branch: CONFIG.BRANCH
     });
-    return data.content.sha;
+    return { sha: data.content.sha, filename: filename };
   } catch (e) {
     console.error('Upload failed:', e);
     throw e;
   }
 }
 
-function getImageUrl(sha) {
-  return `https://raw.githubusercontent.com/${CONFIG.OWNER}/${CONFIG.REPO}/${CONFIG.BRANCH}/${sha}`;
+function getImageUrl(filename) {
+  return `https://raw.githubusercontent.com/${CONFIG.OWNER}/${CONFIG.REPO}/${CONFIG.BRANCH}/${filename}`;
 }
 
 function initImageUpload() {
@@ -1016,8 +1016,8 @@ function initImageUpload() {
           }
           try {
             showToast('上传图片中...');
-            const sha = await uploadImageToRepo(file);
-            const url = getImageUrl(sha);
+            const { filename } = await uploadImageToRepo(file);
+            const url = getImageUrl(filename);
             tempImages.push(url);
             insertImageIntoTextarea(url, textarea);
             renderPreviews();
@@ -1033,7 +1033,7 @@ function initImageUpload() {
         }
       }
     });
-  }
+  } 
 
   area.addEventListener('click', () => input.click());
   area.addEventListener('dragover', e => { e.preventDefault(); area.style.borderColor = 'var(--accent)'; });
@@ -1061,8 +1061,8 @@ function initImageUpload() {
 
       try {
         showToast('上传图片中...');
-        const sha = await uploadImageToRepo(file);
-        const url = getImageUrl(sha);
+        const { filename } = await uploadImageToRepo(file);
+        const url = getImageUrl(filename);
         tempImages.push(url);
         insertImageIntoTextarea(url, textarea);
         renderPreviews();

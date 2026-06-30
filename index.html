@@ -1064,7 +1064,7 @@ function initImageUpload() {
         const sha = await uploadImageToRepo(file);
         const url = getImageUrl(sha);
         tempImages.push(url);
-        insertImageMarkdown(url, textarea);
+        insertImageIntoTextarea(url, textarea);
         renderPreviews();
         if (textarea && previewPane) {
           previewPane.innerHTML = renderMarkdown(textarea.value);

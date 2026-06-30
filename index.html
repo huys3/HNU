@@ -874,98 +874,55 @@ function toggleComments() {
 
 function editorToMarkdown(editor) {
   if (!editor) return '';
-  // Clone to avoid mutating the DOM
-  const clone = editor.cloneNode(true);
+  // Use innerHTML and convert to Markdown
+  let html = editor.innerHTML;
 
-  // Walk all elements recursively to find images at any depth
-  const elements = [];
-  clone.querySelectorAll('*').forEach(el => elements.push(el));
-
-  let md = '';
-
-  // Process top-level children of the cloned editor
-  const children = Array.from(clone.childNodes);
-  for (const node of children) {
-    if (node.nodeType === 3) {
-      const text = node.textContent.trim();
-      if (text) md += text + '\n';
-    } else if (node.nodeType === 1) {
-      const tag = node.tagName.toLowerCase();
-
-      // Block elements
-      switch (tag) {
-        case 'img': {
-          const src = node.getAttribute('src') || '';
-          md += '\n\n![图片](' + src + ')\n\n';
-          break;
-        }
-        case 'h1': md += '# ' + cleanInline(node.innerHTML) + '\n\n'; break;
-        case 'h2': md += '## ' + cleanInline(node.innerHTML) + '\n\n'; break;
-        case 'h3': md += '### ' + cleanInline(node.innerHTML) + '\n\n'; break;
-        case 'h4': md += '#### ' + cleanInline(node.innerHTML) + '\n\n'; break;
-        case 'h5': md += '##### ' + cleanInline(node.innerHTML) + '\n\n'; break;
-        case 'h6': md += '###### ' + cleanInline(node.innerHTML) + '\n\n'; break;
-        case 'p':
-          // Handle <p> that may contain mixed text and <img>
-          const pChildren = Array.from(node.childNodes);
-          for (const pn of pChildren) {
-            if (pn.nodeType === 3) {
-              const t = pn.textContent.trim();
-              if (t) md += t + '\n';
-            } else if (pn.nodeType === 1) {
-              if (pn.tagName.toLowerCase() === 'img') {
-                const src = pn.getAttribute('src') || '';
-                md += '\n\n![图片](' + src + ')\n\n';
-              } else {
-                md += cleanInline(pn.textContent) + '\n';
-              }
-            }
-          }
-          md += '\n';
-          break;
-        case 'br': md += '\n'; break;
-        case 'blockquote':
-          md += '\n> ' + node.textContent.trim().replace(/\n/g, '\n> ') + '\n\n';
-          break;
-        case 'pre':
-          md += '\n```\n' + escapeHtml(node.textContent) + '\n```\n\n';
-          break;
-        case 'code':
-          md += '`' + node.textContent + '`';
-          break;
-        case 'ul':
-        case 'ol': {
-          const items = Array.from(node.children).map(li =>
-            '- ' + cleanInline(li.innerHTML)
-          ).join('\n');
-          md += '\n' + items + '\n\n';
-          break;
-        }
-        case 'a':
-          md += '[' + cleanInline(node.textContent) + '](' + (node.getAttribute('href') || '') + ')';
-          break;
-        default:
-          md += cleanInline(node.textContent) + '\n';
-      }
-    }
-  }
-
-  // Also handle images that are direct children of the editor but not wrapped in <p>
-  elements.forEach(el => {
-    if (el.tagName.toLowerCase() === 'img' && el.parentNode === clone) {
-      const src = el.getAttribute('src') || '';
-      if (!md.includes('![图片](' + src + ')')) {
-        md += '\n\n![图片](' + src + ')\n\n';
-      }
-    }
+  // Convert <img> tags to ![图片](src)
+  html = html.replace(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi, (match, src) => {
+    return '\n\n![图片](' + src + ')\n\n';
   });
 
-  return md.replace(/\n{3,}/g, '\n\n').trim();
+  // Remove class/alt/etc attributes from remaining tags
+  html = html.replace(/\s*class="[^"]*"/g, '');
+  html = html.replace(/\s*alt="[^"]*"/g, '');
+
+  // Convert block-level tags to Markdown
+  html = html.replace(/<h([1-6)][^>]*>(.*?)<\/h\1>/gi, (_, level, content) => {
+    return '\n' + '#'.repeat(parseInt(level)) + ' ' + cleanHtml(content) + '\n\n';
+  });
+
+  html = html.replace(/<p[^>]*>(.*?)<\/p>/gi, (_, content) => {
+    return cleanHtml(content) + '\n\n';
+  });
+
+  html = html.replace(/<br\s*\/?>/gi, '\n');
+  html = html.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, (_, content) => {
+    return '\n> ' + content.replace(/\n/g, '\n> ').trim() + '\n\n';
+  });
+  html = html.replace(/<pre[^>]*>(.*?)<\/pre>/gi, (_, content) => {
+    return '\n```\n' + escapeHtml(content) + '\n```\n\n';
+  });
+  html = html.replace(/<code[^>]*>(.*?)<\/code>/gi, (_, content) => {
+    return '`' + content + '`';
+  });
+  html = html.replace(/<(ul|ol)[^>]*>(.*?)<\/\1>/gi, (_, tag, content) => {
+    const items = content.replace(/<li[^>]*>/g, '- ').replace(/<\/li>/g, '\n');
+    return '\n' + items + '\n\n';
+  });
+  html = html.replace(/<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, (_, url, text) => {
+    return '[' + cleanHtml(text) + '](' + url + ')';
+  });
+
+  // Remove any remaining HTML tags
+  html = html.replace(/<[^>]+>/g, '');
+
+  // Clean up whitespace
+  html = cleanHtml(html);
+  return html.replace(/\n{3,}/g, '\n\n').trim();
 }
 
-function cleanInline(html) {
-  // Strip <br> tags and extra whitespace
-  return html.replace(/<br\s*\/?>/gi, '\n').trim();
+function cleanHtml(text) {
+  return text.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
 }
 
 function renderDetail(postId) {

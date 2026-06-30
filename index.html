@@ -726,4 +726,17 @@ function formatDate(iso) {
 function formatDateLong(iso) {
   const d = new Date(iso);
   return d.getFullYear() + ' 年 ' + (d.getMonth()+1) + ' 月 ' + d.getDate() + ' 日 ' +
-    String(d.getHours()).padStart(2,'0') + ':' + String(d.g
+    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ========== Init ==========
+render();
+</script>
+</body>
+</html>

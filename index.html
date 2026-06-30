@@ -316,24 +316,38 @@ async function loadPosts() {
 async function savePosts() {
   if (!token) { showToast('请先配置 GitHub Token'); return; }
   try {
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(posts, null, 2))));
+
+    // 先尝试获取当前 SHA
     let sha = null;
     try {
       const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
       sha = data.sha;
     } catch (e) {
-      // 文件不存在，首次创建
-      if (e.message.includes('404')) {
-        sha = null;
-      } else {
-        throw e;
-      }
+      // 文件不存在
     }
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(posts, null, 2))));
+
+    if (sha) {
+      // 文件存在，先删除再重建（避免 SHA 冲突）
+      await ghApi('DELETE', `/contents/${POSTS_FILE}`, {
+        message: 'Delete old posts.json',
+        sha: sha,
+        branch: BRANCH
+      });
+    }
+
+    // 重新获取（可能已被删除，也可能被其他人修改了）
+    let newSha = null;
+    try {
+      const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
+      newSha = data.sha;
+    } catch (e) {}
+
     await ghApi('PUT', `/contents/${POSTS_FILE}`, {
-      message: sha ? 'Update blog posts' : 'Initialize blog posts',
+      message: newSha ? 'Update blog posts' : 'Create blog posts',
       content: encoded,
       branch: BRANCH,
-      ...(sha ? { sha: sha } : {})
+      ...(newSha ? { sha: newSha } : {})
     });
     showToast('保存成功！');
   } catch (e) {

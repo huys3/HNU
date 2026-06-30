@@ -511,22 +511,37 @@ async function savePosts() {
       await doSave(sha);
     } catch (e) {
       if (e.message.includes('409')) {
-        const latest = await fetchRemotePostsWithSha();
-        if (!latest.sha) throw e;
-        // Start from remote (authoritative), then add any local-only posts
-        const mergedPosts = latest.posts.map(remote => {
-          const local = posts.find(p => p.id === remote.id);
-          return local || remote;
-        });
-        posts.forEach(local => {
-          if (!latest.posts.some(remote => remote.id === local.id)) {
-            mergedPosts.push(local);
+        let maxRetries = 5;
+        let succeeded = false;
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+          const latest = await fetchRemotePostsWithSha();
+          if (!latest.sha) throw e;
+          const mergedPosts = latest.posts.map(remote => {
+            const local = posts.find(p => p.id === remote.id);
+            return local || remote;
+          });
+          posts.forEach(local => {
+            if (!latest.posts.some(remote => remote.id === local.id)) {
+              mergedPosts.push(local);
+            }
+          });
+          posts = mergedPosts;
+          json = JSON.stringify(posts, null, 2);
+          encoded = encodePayload(json);
+          try {
+            await doSave(latest.sha);
+            succeeded = true;
+            break; // success
+          } catch (retryErr) {
+            if (retryErr.message.includes('409')) {
+              continue; // another concurrent writer — retry
+            }
+            throw retryErr;
           }
-        });
-        posts = mergedPosts;
-        json = JSON.stringify(posts, null, 2);
-        encoded = encodePayload(json);
-        await doSave(latest.sha);
+        }
+        if (!succeeded) {
+          throw new Error('保存冲突，请稍后重试（并发写入过多）');
+        }
       } else {
         throw e;
       }

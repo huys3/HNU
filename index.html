@@ -383,9 +383,9 @@ function showHome() {
 }
 
 function showEditor() {
-  if (!authenticated) {
-    showToast('请先在首页配置 GitHub Token');
-    showHome();
+  // 发帖需要 Token，如果没有则先跳转到 Token 输入页
+  if (!token) {
+    loadAndRender();
     return;
   }
   currentView = 'editor';
@@ -401,19 +401,12 @@ function showDetail(postId) {
 
 async function loadAndRender() {
   const app = document.getElementById('app');
-  if (!token) {
-    app.innerHTML = renderAuthSetup();
-    return;
-  }
+  // 始终尝试加载帖子（不需要 Token 也能读取公开仓库）
   app.innerHTML = '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
-  authenticated = await testToken();
-  if (!authenticated) {
-    app.innerHTML = renderAuthSetup();
-    return;
-  }
+  authenticated = !!token;
   await loadPosts();
   if (!postsLoaded) {
-    app.innerHTML = '<div class="empty-state"><p>加载失败，请检查 Token 权限。</p></div>';
+    app.innerHTML = '<div class="empty-state"><p>加载失败。</p></div>';
     return;
   }
   currentView = 'home';
@@ -422,8 +415,6 @@ async function loadAndRender() {
 
 // ========== Home View ==========
 function renderHome() {
-  if (!token) return renderAuthSetup();
-  if (!authenticated) return renderAuthSetup();
   if (!postsLoaded) return '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
 
   if (posts.length === 0) {
@@ -454,7 +445,8 @@ function renderHome() {
     `;
   }).join('');
 
-  return `<div class="post-list">${cards}</div>`;
+  return `<div class="post-list">${cards}</div>` +
+    (!token ? '<div style="text-align:center;margin-top:24px;"><button class="btn-new-post" style="background:#6b7280;" onclick="loadAndRender()">⚙️ 管理/发帖</button></div>' : '');
 }
 
 // ========== Auth Setup View ==========

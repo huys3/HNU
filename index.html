@@ -357,6 +357,7 @@ function render() {
   const app = document.getElementById('app');
   if (currentView === 'editor') {
     app.innerHTML = renderEditor();
+    setTimeout(initImageUpload, 0);
   } else if (currentView === 'detail') {
     app.innerHTML = renderDetail(window._currentPostId);
   } else {

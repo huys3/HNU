@@ -867,34 +867,52 @@ function editorToMarkdown(editor) {
   // Clone to avoid mutating the DOM
   const clone = editor.cloneNode(true);
 
-  // Collect children and build Markdown string
-  let md = '';
-  const children = Array.from(clone.childNodes);
+  // Walk all elements recursively to find images at any depth
+  const elements = [];
+  clone.querySelectorAll('*').forEach(el => elements.push(el));
 
+  let md = '';
+
+  // Process top-level children of the cloned editor
+  const children = Array.from(clone.childNodes);
   for (const node of children) {
     if (node.nodeType === 3) {
-      // Text node
       const text = node.textContent.trim();
       if (text) md += text + '\n';
     } else if (node.nodeType === 1) {
       const tag = node.tagName.toLowerCase();
 
-      // <img> -> ![图片](src)
-      if (tag === 'img') {
-        const src = node.getAttribute('src') || '';
-        md += '\n\n![图片](' + src + ')\n\n';
-        continue;
-      }
-
       // Block elements
       switch (tag) {
+        case 'img': {
+          const src = node.getAttribute('src') || '';
+          md += '\n\n![图片](' + src + ')\n\n';
+          break;
+        }
         case 'h1': md += '# ' + cleanInline(node.innerHTML) + '\n\n'; break;
         case 'h2': md += '## ' + cleanInline(node.innerHTML) + '\n\n'; break;
         case 'h3': md += '### ' + cleanInline(node.innerHTML) + '\n\n'; break;
         case 'h4': md += '#### ' + cleanInline(node.innerHTML) + '\n\n'; break;
         case 'h5': md += '##### ' + cleanInline(node.innerHTML) + '\n\n'; break;
         case 'h6': md += '###### ' + cleanInline(node.innerHTML) + '\n\n'; break;
-        case 'p': md += cleanInline(node.textContent) + '\n\n'; break;
+        case 'p':
+          // Handle <p> that may contain mixed text and <img>
+          const pChildren = Array.from(node.childNodes);
+          for (const pn of pChildren) {
+            if (pn.nodeType === 3) {
+              const t = pn.textContent.trim();
+              if (t) md += t + '\n';
+            } else if (pn.nodeType === 1) {
+              if (pn.tagName.toLowerCase() === 'img') {
+                const src = pn.getAttribute('src') || '';
+                md += '\n\n![图片](' + src + ')\n\n';
+              } else {
+                md += cleanInline(pn.textContent) + '\n';
+              }
+            }
+          }
+          md += '\n';
+          break;
         case 'br': md += '\n'; break;
         case 'blockquote':
           md += '\n> ' + node.textContent.trim().replace(/\n/g, '\n> ') + '\n\n';
@@ -921,6 +939,16 @@ function editorToMarkdown(editor) {
       }
     }
   }
+
+  // Also handle images that are direct children of the editor but not wrapped in <p>
+  elements.forEach(el => {
+    if (el.tagName.toLowerCase() === 'img' && el.parentNode === clone) {
+      const src = el.getAttribute('src') || '';
+      if (!md.includes('![图片](' + src + ')')) {
+        md += '\n\n![图片](' + src + ')\n\n';
+      }
+    }
+  });
 
   return md.replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -966,7 +994,7 @@ function renderDetail(postId) {
       <div class="detail-body">
         ${contentHtml || '<p>暂无内容</p>'}
       </div>
-      <div class="comment-section" style="margin-top:28px;" ${post.commentsEnabled === false ? 'style="display:none"' : ''}>
+      <div class="comment-section" style="margin-top:28px;${post.commentsEnabled === false ? 'display:none' : ''}">
         <h3 style="margin-bottom:8px;">💬 评论</h3>
         <form class="comment-form" onsubmit="event.preventDefault(); addComment('${post.id}', this);">
           <input type="text" name="name" placeholder="你的名字（可选）">

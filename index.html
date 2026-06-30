@@ -447,7 +447,7 @@ function render() {
     app.innerHTML = renderDetail(window._currentPostId);
   } else {
     let html = '';
-    if (showingAuthSetup && authenticated) {
+    if (showingAuthSetup) {
       html = renderAuthSetup();
     }
     html += renderHome();
@@ -465,6 +465,7 @@ function showHome() {
 function showEditor() {
   if (!token || !authenticated) {
     showingAuthSetup = true;
+    currentView = 'home';
     render();
     showToast('请先配置 GitHub Token 后再发布文章');
     return;
@@ -483,7 +484,17 @@ function showDetail(postId) {
 async function loadAndRender() {
   const app = document.getElementById('app');
   app.innerHTML = '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
-  authenticated = !!token;
+
+  if (token) {
+    authenticated = await testToken();
+    if (!authenticated) {
+      localStorage.removeItem('gh_blog_token');
+      token = '';
+    }
+  } else {
+    authenticated = false;
+  }
+
   await loadPosts();
   if (!postsLoaded) {
     app.innerHTML = '<div class="empty-state"><p>加载失败。</p></div>';
@@ -559,6 +570,7 @@ function renderAuthSetup() {
 
 function toggleAuthSetup() {
   showingAuthSetup = true;
+  currentView = 'home';
   render();
 }
 
@@ -823,16 +835,10 @@ function updateHeaderButtons() {
   const btnConfig = document.getElementById('btn-config');
   const btnNewPost = document.getElementById('btn-new-post');
   const btnLogout = document.getElementById('btn-logout');
-  
-  if (authenticated) {
-    btnConfig.style.display = 'block';
-    btnNewPost.style.display = 'block';
-    btnLogout.style.display = 'block';
-  } else {
-    btnConfig.style.display = 'none';
-    btnNewPost.style.display = 'none';
-    btnLogout.style.display = 'none';
-  }
+
+  btnConfig.style.display = 'block';
+  btnNewPost.style.display = authenticated ? 'block' : 'none';
+  btnLogout.style.display = authenticated ? 'block' : 'none';
 }
 
 function logout() {
@@ -879,7 +885,6 @@ function showToast(msg) {
 
 // 初始化
 window.addEventListener('DOMContentLoaded', async () => {
-  authenticated = !!token;
   updateHeaderButtons();
   await loadAndRender();
 });

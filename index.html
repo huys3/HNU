@@ -293,20 +293,28 @@ async function ghApi(method, path, body) {
 
 async function loadPosts() {
   try {
-    // 直接用 raw.githubusercontent.com 读取，不需要 Token，不受 API 限速影响
-    const rawUrl = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${POSTS_FILE}`;
-    const res = await fetch(rawUrl);
+    // 用 GitHub API 读取（支持 CORS），不需要 Token
+    const apiUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${POSTS_FILE}?ref=${BRANCH}`;
+    const res = await fetch(apiUrl);
     if (!res.ok) {
-      // 文件不存在
+      // 文件不存在 (404) 或其他错误
       posts = [];
       postsLoaded = true;
       return;
     }
-    const text = await res.text();
-    posts = JSON.parse(text);
+    const data = await res.json();
+    if (data.content) {
+      // base64 解码 + UTF-8 处理
+      const binary = atob(data.content);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const json = new TextDecoder('utf-8').decode(bytes);
+      posts = JSON.parse(json);
+    } else {
+      posts = [];
+    }
     postsLoaded = true;
   } catch (e) {
-    // 任何错误都视为空列表
     console.warn('Load posts failed:', e);
     posts = [];
     postsLoaded = true;
@@ -718,17 +726,4 @@ function formatDate(iso) {
 function formatDateLong(iso) {
   const d = new Date(iso);
   return d.getFullYear() + ' 年 ' + (d.getMonth()+1) + ' 月 ' + d.getDate() + ' 日 ' +
-    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-}
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
-}
-
-// ========== Init ==========
-render();
-</script>
-</body>
-</html>
+    String(d.getHours()).padStart(2,'0') + ':' + String(d.g

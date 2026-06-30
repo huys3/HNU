@@ -306,14 +306,9 @@ async function loadPosts() {
     }
     postsLoaded = true;
   } catch (e) {
-    if (e.message.includes('404')) {
-      posts = [];
-      postsLoaded = true;
-    } else {
-      console.error('Load posts failed:', e);
-      posts = [];
-      postsLoaded = false;
-    }
+    // 404 = 文件不存在, 403 = 速率限制, 都视为空帖子列表
+    posts = [];
+    postsLoaded = true;
   }
 }
 

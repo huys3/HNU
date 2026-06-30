@@ -271,7 +271,13 @@
     align-self: flex-start; padding: 8px 14px; border: none; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer;
   }
   .comment-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-  .comment-card .comment-meta { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; }
+  .comment-card .comment-meta { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .comment-delete-btn {
+    background: none; border: none; color: var(--text-secondary); cursor: pointer;
+    font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; transition: all 0.15s;
+    opacity: 0.5;
+  }
+  .comment-delete-btn:hover { background: var(--red); color: #fff; opacity: 1; }
   .comment-empty { color: var(--text-secondary); font-size: 0.95rem; margin-top: 12px; }
 
   .toast {
@@ -809,7 +815,7 @@ function renderDetail(postId) {
   const commentsHtml = comments.length > 0
     ? comments.map(comment => `
         <div class="comment-card">
-          <div class="comment-meta">${escapeHtml(comment.name || '匿名')} · ${formatDate(comment.createdAt)}</div>
+          <div class="comment-meta">${escapeHtml(comment.name || '匿名')} · ${formatDate(comment.createdAt)}${authenticated ? '<button class="comment-delete-btn" onclick="deleteComment(\'' + postId + '\',\'' + comment.id + '\')" title="删除评论">🗑️</button>' : ''}</div>
           <div>${escapeHtml(comment.content || '')}</div>
         </div>
       `).join('')
@@ -1012,6 +1018,18 @@ function addComment(postId, form) {
   form.reset();
   render();
   showToast('评论已发布');
+}
+
+function deleteComment(postId, commentId) {
+  if (!authenticated) { showToast('请先配置 Token'); return; }
+  if (!confirm('确定要删除这条评论吗？')) return;
+  if (commentsMap[postId]) {
+    commentsMap[postId] = commentsMap[postId].filter(c => c.id !== commentId);
+    if (commentsMap[postId].length === 0) delete commentsMap[postId];
+    saveCommentsMap();
+    render();
+    showToast('已删除评论');
+  }
 }
 
 function renderMarkdown(markdown) {

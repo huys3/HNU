@@ -963,7 +963,7 @@ function renderDetail(postId) {
       </div>
       <div class="comment-section" style="margin-top:28px;${post.commentsEnabled === false ? 'display:none' : ''}">
         <h3 style="margin-bottom:8px;">💬 评论</h3>
-        <form class="comment-form" onsubmit="event.preventDefault(); addComment('${post.id}', this);">
+        <form class="comment-form" onsubmit="event.preventDefault(); addComment('${post.id}', this);${post.commentsEnabled === false ? ' return false;' : ''}">
           <input type="text" name="name" placeholder="你的名字（可选）">
           <textarea name="content" rows="3" placeholder="写下你的评论..." required></textarea>
           <button type="submit">发布评论</button>
@@ -1148,6 +1148,11 @@ function setSearchQuery(value) {
 }
 
 function addComment(postId, form) {
+  const post = posts.find(p => p.id === postId);
+  if (post && post.commentsEnabled === false) {
+    showToast('该文章已关闭评论');
+    return;
+  }
   const name = (form.querySelector('input[name="name"]').value || '').trim() || '匿名';
   const content = (form.querySelector('textarea[name="content"]').value || '').trim();
   if (!content) {

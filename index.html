@@ -162,41 +162,38 @@
   
   .editor-actions { display: flex; gap: 10px; margin-top: 24px; }
 
-  .editor-split { display: flex; gap: 16px; margin-bottom: 8px; }
-  .editor-pane {
-    flex: 1; display: flex; flex-direction: column;
+  .wysiwyg-editor {
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px;
+    background: var(--card-bg); min-height: 400px; max-height: 70vh;
+    overflow-y: auto; font-size: 1.02rem; line-height: 1.85; word-break: break-word;
+    outline: none; transition: border-color 0.2s;
   }
-  .editor-pane-label {
-    font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;
-  }
-  .editor-pane textarea {
-    width: 100%; min-height: 360px; padding: 12px 14px; border: 1px solid var(--border);
-    border-radius: 8px; font-size: 0.95rem; font-family: inherit; line-height: 1.6;
-    resize: vertical; transition: border-color 0.2s; background: var(--card-bg); color: var(--text);
-  }
-  .editor-pane textarea:focus {
-    outline: none; border-color: var(--accent);
+  .wysiwyg-editor:focus {
+    border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
   }
-  .editor-preview {
-    flex: 1; min-height: 360px; padding: 12px 14px; border: 1px solid var(--border);
-    border-radius: 8px; background: var(--card-bg); color: var(--text);
-    font-size: 1.02rem; line-height: 1.85; white-space: pre-wrap; word-break: break-word;
-    overflow-y: auto;
-  }
-  .editor-preview img {
+  .wysiwyg-editor img {
     max-width: 100%; border-radius: 8px; box-shadow: var(--shadow); margin: 8px 0;
+    cursor: default;
   }
-  .editor-preview pre {
+  .wysiwyg-editor img.wysiwyg-img-selected {
+    outline: 2px solid var(--accent);
+  }
+  .wysiwyg-editor pre {
     background: #f5f7fb; padding: 14px; border-radius: 8px; overflow-x: auto;
     font-size: 0.92rem; margin: 12px 0;
   }
-  .editor-preview code {
+  .wysiwyg-editor code {
     background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.92em;
   }
-  .editor-preview blockquote {
+  .wysiwyg-editor blockquote {
     border-left: 4px solid var(--accent); padding-left: 12px; color: var(--text-secondary); margin: 12px 0;
   }
+  .wysiwyg-editor h1, .wysiwyg-editor h2, .wysiwyg-editor h3,
+  .wysiwyg-editor h4, .wysiwyg-editor h5, .wysiwyg-editor h6 { margin: 12px 0 6px; }
+  .wysiwyg-editor ul, .wysiwyg-editor ol { padding-left: 24px; margin: 8px 0; }
+  .wysiwyg-editor p { margin: 4px 0; }
+  .wysiwyg-editor a { color: var(--accent); }
   .btn-publish {
     background: var(--accent); color: #fff; border: none; padding: 10px 28px;
     border-radius: 8px; font-size: 0.95rem; cursor: pointer; font-weight: 600;
@@ -347,8 +344,6 @@
     .detail-page h1 { font-size: 1.4rem; }
     .image-preview-item { width: 80px; height: 80px; }
     .header-actions { flex-wrap: wrap; }
-    .editor-split { flex-direction: column; }
-    .editor-pane textarea, .editor-preview { min-height: 240px; }
   }
   
   .hidden { display: none !important; }
@@ -376,9 +371,9 @@ const CONFIG = {
   REPO: 'HNU',
   BRANCH: 'main',
   POSTS_FILE: 'posts.json',
-  MAX_CONTENT_LENGTH: 50000,
+  MAX_CONTENT_LENGTH: 900000,
   MAX_IMAGE_SIZE: 5 * 1024 * 1024,
-  MAX_IMAGES: 5,
+  MAX_IMAGES: 100,
   IMAGE_MAX_WIDTH: 1920,
   IMAGE_MAX_HEIGHT: 1920,
   IMAGE_QUALITY: 0.8
@@ -792,21 +787,13 @@ function renderEditor() {
         <input type="text" id="post-title" placeholder="输入文章标题..." maxlength="100" value="${isEdit ? escapeAttr(post.title) : ''}">
       </div>
       <div class="form-group">
-        <div class="editor-split">
-          <div class="editor-pane">
-            <div class="editor-pane-label">Markdown 源码</div>
-            <textarea id="post-content" placeholder="支持 Markdown 语法，例如 # 标题、**加粗**、- 列表，上传图片可在右侧实时预览" maxlength="${CONFIG.MAX_CONTENT_LENGTH}">${isEdit ? escapeHtml(post.content) : ''}</textarea>
-          </div>
-          <div class="editor-pane">
-            <div class="editor-pane-label">实时预览</div>
-            <div class="editor-preview" id="editor-preview">${isEdit ? renderMarkdown(post.content) : ''}</div>
-          </div>
-        </div>
+        <label>正文内容</label>
+        <div class="wysiwyg-editor" id="wysiwyg-editor" contenteditable="true">${isEdit ? post.content : ''}</div>
       </div>
       <div class="form-group">
         <label>配图(选填，最多 ${CONFIG.MAX_IMAGES} 张，每张 ≤ ${Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024)}MB，自动压缩)</label>
         <div class="image-upload-area" id="upload-area">
-          <p>点击或拖动上传图片</p>
+          <p>点击或拖动上传图片（图片将插入到光标位置）</p>
           <input type="file" id="image-input" accept="image/*" multiple>
         </div>
         <div class="image-preview-grid" id="image-preview"></div>
@@ -829,18 +816,14 @@ function renderEditor() {
 
 async function publishPost() {
   if (!authenticated) { showToast('请配置 Token'); return; }
-  
+
   const titleInput = document.getElementById('post-title');
-  const contentInput = document.getElementById('post-content');
+  const editor = document.getElementById('wysiwyg-editor');
   const title = titleInput.value.trim();
-  const content = contentInput.value.trim();
+  const content = editor ? editorToMarkdown(editor) : '';
 
   if (!title) { showToast('请输入标题'); titleInput.focus(); return; }
-  if (!content) { showToast('请输入内容'); contentInput.focus(); return; }
-  if (content.length > CONFIG.MAX_CONTENT_LENGTH) { 
-    showToast('内容超限，请控制在 ' + Math.round(CONFIG.MAX_CONTENT_LENGTH / 1000) + 'KB 以内'); 
-    return; 
-  }
+  if (!content) { showToast('请输入内容'); return; }
 
   const isEdit = !!window._editingPostId;
 
@@ -877,6 +860,74 @@ function toggleComments() {
   const label = document.getElementById('comments-label');
   const isOn = el.classList.toggle('on');
   label.textContent = isOn ? '允许评论' : '禁止评论';
+}
+
+function editorToMarkdown(editor) {
+  if (!editor) return '';
+  // Clone to avoid mutating the DOM
+  const clone = editor.cloneNode(true);
+
+  // Collect children and build Markdown string
+  let md = '';
+  const children = Array.from(clone.childNodes);
+
+  for (const node of children) {
+    if (node.nodeType === 3) {
+      // Text node
+      const text = node.textContent.trim();
+      if (text) md += text + '\n';
+    } else if (node.nodeType === 1) {
+      const tag = node.tagName.toLowerCase();
+
+      // <img> -> ![图片](src)
+      if (tag === 'img') {
+        const src = node.getAttribute('src') || '';
+        md += '\n\n![图片](' + src + ')\n\n';
+        continue;
+      }
+
+      // Block elements
+      switch (tag) {
+        case 'h1': md += '# ' + cleanInline(node.innerHTML) + '\n\n'; break;
+        case 'h2': md += '## ' + cleanInline(node.innerHTML) + '\n\n'; break;
+        case 'h3': md += '### ' + cleanInline(node.innerHTML) + '\n\n'; break;
+        case 'h4': md += '#### ' + cleanInline(node.innerHTML) + '\n\n'; break;
+        case 'h5': md += '##### ' + cleanInline(node.innerHTML) + '\n\n'; break;
+        case 'h6': md += '###### ' + cleanInline(node.innerHTML) + '\n\n'; break;
+        case 'p': md += cleanInline(node.textContent) + '\n\n'; break;
+        case 'br': md += '\n'; break;
+        case 'blockquote':
+          md += '\n> ' + node.textContent.trim().replace(/\n/g, '\n> ') + '\n\n';
+          break;
+        case 'pre':
+          md += '\n```\n' + escapeHtml(node.textContent) + '\n```\n\n';
+          break;
+        case 'code':
+          md += '`' + node.textContent + '`';
+          break;
+        case 'ul':
+        case 'ol': {
+          const items = Array.from(node.children).map(li =>
+            '- ' + cleanInline(li.innerHTML)
+          ).join('\n');
+          md += '\n' + items + '\n\n';
+          break;
+        }
+        case 'a':
+          md += '[' + cleanInline(node.textContent) + '](' + (node.getAttribute('href') || '') + ')';
+          break;
+        default:
+          md += cleanInline(node.textContent) + '\n';
+      }
+    }
+  }
+
+  return md.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function cleanInline(html) {
+  // Strip <br> tags and extra whitespace
+  return html.replace(/<br\s*\/?>/gi, '\n').trim();
 }
 
 function renderDetail(postId) {
@@ -950,16 +1001,8 @@ function initImageUpload() {
   const area = document.getElementById('upload-area');
   const input = document.getElementById('image-input');
   const preview = document.getElementById('image-preview');
-  const textarea = document.getElementById('post-content');
-  const previewPane = document.getElementById('editor-preview');
+  const editor = document.getElementById('wysiwyg-editor');
   if (!area || !input) return;
-
-  // Live preview: sync textarea content to preview pane on input
-  if (textarea && previewPane) {
-    textarea.addEventListener('input', () => {
-      previewPane.innerHTML = renderMarkdown(textarea.value);
-    });
-  }
 
   area.addEventListener('click', () => input.click());
   area.addEventListener('dragover', e => { e.preventDefault(); area.style.borderColor = 'var(--accent)'; });
@@ -989,13 +1032,9 @@ function initImageUpload() {
         showToast('压缩图片中...');
         const compressed = await compressImage(file);
         tempImages.push(compressed);
-        insertImageMarkdown(compressed);
+        insertImageWysiwyg(compressed, editor);
         renderPreviews();
-        // Update live preview after inserting image
-        if (textarea && previewPane) {
-          previewPane.innerHTML = renderMarkdown(textarea.value);
-        }
-        showToast('图片已插入正文');
+        showToast('图片已插入');
       } catch (err) {
         console.error('Compression failed:', err);
         showToast('图片压缩失败，请重试');
@@ -1014,34 +1053,43 @@ function initImageUpload() {
 
   window.removeImage = function(index) {
     tempImages.splice(index, 1);
-    renderPreviews();
-    // Also remove corresponding markdown from textarea and update preview
-    if (textarea) {
-      // Remove the last inserted image markdown
-      const imageMdRegex = /\n\n!\[图片\]\(data:image\/[^)]+\)\n\n$/;
-      textarea.value = textarea.value.replace(imageMdRegex, '');
-      if (previewPane) {
-        previewPane.innerHTML = renderMarkdown(textarea.value);
-      }
+    // Remove corresponding <img> from editor
+    if (editor) {
+      const imgs = editor.querySelectorAll('.wysiwyg-img-temp');
+      if (imgs[index]) imgs[index].remove();
     }
     renderPreviews();
   };
 }
 
-function insertImageMarkdown(src) {
-  const textarea = document.getElementById('post-content');
-  if (!textarea) return;
+function insertImageWysiwyg(src, editor) {
+  if (!editor) return;
+  const img = document.createElement('img');
+  img.src = src;
+  img.className = 'wysiwyg-img-temp';
+  img.alt = '图片';
 
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const text = textarea.value;
-  const imageMarkdown = `\n\n![图片](${src})\n\n`;
-  const newValue = text.slice(0, start) + imageMarkdown + text.slice(end);
-
-  textarea.value = newValue;
-  const cursorPos = start + imageMarkdown.length;
-  textarea.setSelectionRange(cursorPos, cursorPos);
-  textarea.focus();
+  // Insert at caret position
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(img);
+    // Move cursor after the image
+    range.setStartAfter(img);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else {
+    editor.appendChild(img);
+  }
+  // Ensure there's a paragraph after the image for continued typing
+  if (img.nextSibling && img.nextSibling.nodeType !== 3) {
+    // already followed by block element, good
+  } else {
+    const br = document.createElement('br');
+    editor.appendChild(br);
+  }
 }
 
 function initImagePreview() {
@@ -1050,14 +1098,19 @@ function initImagePreview() {
   const post = posts.find(p => p.id === window._editingPostId);
   if (!post || !post.images || post.images.length === 0) return;
 
-  const grid = document.getElementById('image-preview');
-  if (!grid) return;
-  grid.innerHTML = post.images.map((src, i) =>
-    '<div class="image-preview-item">' +
-    '<img src="' + src + '" alt="">' +
-    '<button class="remove-btn" onclick="window.removeImage(' + i + ')">✕</button>' +
-    '</div>'
-  ).join('');
+  const editor = document.getElementById('wysiwyg-editor');
+  if (!editor) return;
+
+  // Re-insert existing images into the WYSIWYG editor
+  post.images.forEach((src, i) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.className = 'wysiwyg-img-temp';
+    img.alt = '图片';
+    editor.appendChild(img);
+    const br = document.createElement('br');
+    editor.appendChild(br);
+  });
 }
 
 function updateHeaderButtons() {

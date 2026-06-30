@@ -1146,18 +1146,12 @@ function initImagePreview() {
   const post = posts.find(p => p.id === window._editingPostId);
   if (!post || !post.images || post.images.length === 0) return;
 
-  // Restore images to tempImages and textarea
+  // Restore images to tempImages for the preview grid
   tempImages = [...post.images];
 
-  // Re-insert image markdowns into textarea
-  const textarea = document.getElementById('post-content');
   const previewPane = document.getElementById('editor-preview');
-  if (textarea) {
-    const imageMarkdowns = post.images.map(url => '\n\n![图片](' + url + ')\n\n');
-    textarea.value += imageMarkdowns.join('');
-    if (previewPane) {
-      previewPane.innerHTML = renderMarkdown(textarea.value);
-    }
+  if (previewPane) {
+    previewPane.innerHTML = renderMarkdown(post.content);
   }
 
   const grid = document.getElementById('image-preview');

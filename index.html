@@ -843,16 +843,17 @@ function initImageUpload() {
         continue; 
       }
       if (tempImages.length >= CONFIG.MAX_IMAGES) { 
-        showToast('最多上传 ' + CONFIG.MAX_IMAGES + ' 张图片'); 
-        break; 
+        showToast('最多上传 ' + CONFIG.MAX_IMAGES + ' 张图片');
+        break;
       }
-      
+
       try {
         showToast('压缩图片中...');
         const compressed = await compressImage(file);
         tempImages.push(compressed);
+        insertImageMarkdown(compressed);
         renderPreviews();
-        showToast('图片已加入');
+        showToast('图片已插入正文');
       } catch (err) {
         console.error('Compression failed:', err);
         showToast('图片压缩失败，请重试');
@@ -873,6 +874,22 @@ function initImageUpload() {
     tempImages.splice(index, 1);
     renderPreviews();
   };
+}
+
+function insertImageMarkdown(src) {
+  const textarea = document.getElementById('post-content');
+  if (!textarea) return;
+
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const imageMarkdown = `\n\n![图片](${src})\n\n`;
+  const newValue = text.slice(0, start) + imageMarkdown + text.slice(end);
+
+  textarea.value = newValue;
+  const cursorPos = start + imageMarkdown.length;
+  textarea.setSelectionRange(cursorPos, cursorPos);
+  textarea.focus();
 }
 
 function initImagePreview() {

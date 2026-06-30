@@ -16,10 +16,10 @@
     --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
     --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
     --radius: 10px;
+    --green: #16a34a;
+    --red: #dc2626;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     background: var(--bg);
@@ -27,8 +27,6 @@
     line-height: 1.7;
     min-height: 100vh;
   }
-
-  /* ---- Header ---- */
   header {
     background: var(--card-bg);
     border-bottom: 1px solid var(--border);
@@ -64,8 +62,6 @@
     transition: background 0.2s;
   }
   .btn-new-post:hover { background: var(--accent-hover); }
-
-  /* ---- Main ---- */
   main {
     max-width: 720px;
     margin: 0 auto;
@@ -74,7 +70,6 @@
 
   /* ---- Post List ---- */
   .post-list { display: flex; flex-direction: column; gap: 16px; }
-
   .post-card {
     background: var(--card-bg);
     border-radius: var(--radius);
@@ -88,216 +83,143 @@
     box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
   }
-  .post-card h2 {
-    font-size: 1.2rem;
-    margin-bottom: 6px;
-    color: var(--text);
-  }
+  .post-card h2 { font-size: 1.2rem; margin-bottom: 6px; color: var(--text); }
   .post-card .post-meta {
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-    margin-bottom: 10px;
-    display: flex;
-    gap: 12px;
-    align-items: center;
+    font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 10px;
+    display: flex; gap: 12px; align-items: center;
   }
   .post-card .post-summary {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-size: 0.95rem; color: var(--text-secondary);
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .post-card .post-thumb {
-    margin-top: 12px;
-    max-width: 100%;
-    border-radius: 6px;
-  }
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-secondary);
-  }
+  .post-card .post-thumb { margin-top: 12px; max-width: 100%; border-radius: 6px; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
   .empty-state p { margin-bottom: 16px; }
 
   /* ---- Editor ---- */
   .editor-page { animation: fadeIn 0.2s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-  .editor-page h1 {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-  }
+  .editor-page h1 { font-size: 1.5rem; margin-bottom: 20px; }
   .form-group { margin-bottom: 18px; }
-  .form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 6px;
-    font-size: 0.92rem;
-  }
+  .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.92rem; }
   .form-group input[type="text"],
   .form-group textarea {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-family: inherit;
-    line-height: 1.6;
-    transition: border-color 0.2s;
-    background: var(--card-bg);
-    color: var(--text);
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 0.95rem; font-family: inherit;
+    line-height: 1.6; transition: border-color 0.2s; background: var(--card-bg); color: var(--text);
   }
-  .form-group input:focus,
-  .form-group textarea:focus {
-    outline: none;
-    border-color: var(--accent);
+  .form-group input:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
   }
   .form-group textarea { min-height: 260px; resize: vertical; }
-
   .image-upload-area {
-    border: 2px dashed var(--border);
-    border-radius: 8px;
-    padding: 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    border: 2px dashed var(--border); border-radius: 8px; padding: 24px;
+    text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    color: var(--text-secondary); font-size: 0.9rem;
   }
-  .image-upload-area:hover {
-    border-color: var(--accent);
-    background: rgba(37,99,235,0.03);
-  }
+  .image-upload-area:hover { border-color: var(--accent); background: rgba(37,99,235,0.03); }
   .image-upload-area input[type="file"] { display: none; }
-
-  .image-preview-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 12px;
-  }
+  .image-preview-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
   .image-preview-item {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid var(--border);
+    position: relative; width: 100px; height: 100px; border-radius: 6px;
+    overflow: hidden; border: 1px solid var(--border);
   }
-  .image-preview-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  .image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
   .image-preview-item .remove-btn {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    border: none;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+    border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff;
+    border: none; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
   }
-
-  .editor-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 24px;
-  }
+  .editor-actions { display: flex; gap: 10px; margin-top: 24px; }
   .btn-publish {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    padding: 10px 28px;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    cursor: pointer;
-    font-weight: 600;
+    background: var(--accent); color: #fff; border: none; padding: 10px 28px;
+    border-radius: 8px; font-size: 0.95rem; cursor: pointer; font-weight: 600;
     transition: background 0.2s;
   }
   .btn-publish:hover { background: var(--accent-hover); }
   .btn-cancel {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
-    padding: 10px 28px;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    cursor: pointer;
+    background: transparent; color: var(--text-secondary); border: 1px solid var(--border);
+    padding: 10px 28px; border-radius: 8px; font-size: 0.95rem; cursor: pointer;
     transition: border-color 0.2s;
   }
   .btn-cancel:hover { border-color: var(--text-secondary); }
+  .btn-delete {
+    background: transparent; color: var(--red); border: 1px solid var(--red);
+    padding: 10px 28px; border-radius: 8px; font-size: 0.95rem; cursor: pointer;
+  }
+  .btn-delete:hover { background: var(--red); color: #fff; }
+
+  /* ---- Auth Setup ---- */
+  .auth-setup {
+    background: #fef3c7; border: 1px solid #f59e0b; border-radius: 10px;
+    padding: 24px; margin-bottom: 24px;
+  }
+  .auth-setup h2 { font-size: 1.1rem; margin-bottom: 12px; color: #92400e; }
+  .auth-setup ol { padding-left: 20px; margin-bottom: 16px; }
+  .auth-setup li { margin-bottom: 6px; font-size: 0.92rem; color: #78350f; }
+  .auth-setup .token-input-row { display: flex; gap: 10px; }
+  .auth-setup input[type="password"],
+  .auth-setup input[type="text"] {
+    flex: 1; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 0.92rem;
+  }
+  .auth-setup .btn-save-token {
+    background: var(--green); color: #fff; border: none; padding: 10px 20px;
+    border-radius: 8px; font-size: 0.92rem; cursor: pointer; font-weight: 600;
+    white-space: nowrap;
+  }
+  .auth-setup .btn-save-token:hover { opacity: 0.9; }
+  .auth-status {
+    margin-top: 10px; font-size: 0.85rem;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .auth-status .dot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+  }
+  .dot-green { background: var(--green); }
+  .dot-red { background: var(--red); }
+
+  /* ---- Loading ---- */
+  .loading { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+  .spinner {
+    display: inline-block; width: 24px; height: 24px;
+    border: 3px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ---- Post Detail ---- */
   .detail-page { animation: fadeIn 0.2s ease; }
   .back-btn {
-    background: none;
-    border: none;
-    color: var(--accent);
-    cursor: pointer;
-    font-size: 0.9rem;
-    padding: 4px 0;
-    margin-bottom: 16px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+    background: none; border: none; color: var(--accent); cursor: pointer;
+    font-size: 0.9rem; padding: 4px 0; margin-bottom: 16px;
+    display: inline-flex; align-items: center; gap: 4px;
   }
   .back-btn:hover { text-decoration: underline; }
-  .detail-page h1 {
-    font-size: 1.7rem;
-    line-height: 1.4;
-    margin-bottom: 10px;
-  }
+  .detail-page h1 { font-size: 1.7rem; line-height: 1.4; margin-bottom: 10px; }
   .detail-page .post-meta {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--border);
   }
   .detail-body {
-    font-size: 1.02rem;
-    line-height: 1.85;
-    white-space: pre-wrap;
-    word-break: break-word;
+    font-size: 1.02rem; line-height: 1.85; white-space: pre-wrap; word-break: break-word;
   }
   .detail-body img {
-    max-width: 100%;
-    border-radius: 8px;
-    margin: 16px 0;
-    box-shadow: var(--shadow);
+    max-width: 100%; border-radius: 8px; margin: 16px 0; box-shadow: var(--shadow);
   }
 
   /* ---- Toast ---- */
   .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
+    position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(80px);
-    background: #1a1a1a;
-    color: #fff;
-    padding: 10px 24px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    z-index: 999;
-    opacity: 0;
-    transition: transform 0.3s, opacity 0.3s;
-    pointer-events: none;
+    background: #1a1a1a; color: #fff; padding: 10px 24px;
+    border-radius: 8px; font-size: 0.9rem; z-index: 999;
+    opacity: 0; transition: transform 0.3s, opacity 0.3s; pointer-events: none;
   }
-  .toast.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
   /* ---- Responsive ---- */
   @media (max-width: 600px) {
@@ -308,6 +230,7 @@
     .post-card h2 { font-size: 1.08rem; }
     .detail-page h1 { font-size: 1.4rem; }
     .image-preview-item { width: 80px; height: 80px; }
+    .auth-setup .token-input-row { flex-direction: column; }
   }
 </style>
 </head>
@@ -321,45 +244,96 @@
 </header>
 
 <main id="app"></main>
-
 <div class="toast" id="toast"></div>
 
 <script>
-// ========== Data Layer ==========
-const STORAGE_KEY = 'blog_posts';
+// ========== Config ==========
+const OWNER = 'huys3';
+const REPO = 'HNU';
+const BRANCH = 'main';
+const POSTS_FILE = 'posts.json';
 
-function getPosts() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch { return []; }
-}
+// ========== State ==========
+let currentView = 'home';
+let posts = [];
+let tempImages = [];
+let token = localStorage.getItem('gh_blog_token') || '';
+let authenticated = false;
+let postsLoaded = false;
 
-function savePosts(posts) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-}
-
-function addPost(title, content, images) {
-  const posts = getPosts();
-  const post = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-    title,
-    content,
-    images,
-    createdAt: new Date().toISOString()
+// ========== GitHub API ==========
+async function ghApi(method, path, body) {
+  const url = `https://api.github.com/repos/${OWNER}/${REPO}${path}`;
+  const opts = {
+    method,
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    }
   };
-  posts.unshift(post);
-  savePosts(posts);
-  return post;
+  if (token) opts.headers['Authorization'] = `Bearer ${token}`;
+  if (body) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`${method} ${path}: ${res.status} ${errText.slice(0, 200)}`);
+  }
+  if (method === 'HEAD') return res;
+  return res.json();
 }
 
-function deletePost(id) {
-  const posts = getPosts().filter(p => p.id !== id);
-  savePosts(posts);
+async function loadPosts() {
+  try {
+    const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
+    if (data.content) {
+      const decoded = atob(data.content);
+      posts = JSON.parse(decoded);
+    } else {
+      posts = [];
+    }
+    postsLoaded = true;
+  } catch (e) {
+    if (e.message.includes('404')) {
+      posts = [];
+      postsLoaded = true;
+    } else {
+      console.error('Load posts failed:', e);
+      posts = [];
+      postsLoaded = false;
+    }
+  }
+}
+
+async function savePosts() {
+  if (!token) { showToast('请先配置 GitHub Token'); return; }
+  try {
+    const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
+    const sha = data.sha;
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(posts, null, 2))));
+    await ghApi('PUT', `/contents/${POSTS_FILE}`, {
+      message: postsLoaded ? 'Update blog posts' : 'Initialize blog posts',
+      content: encoded,
+      branch: BRANCH,
+      sha: sha
+    });
+    showToast('保存成功！');
+  } catch (e) {
+    console.error('Save posts failed:', e);
+    showToast('保存失败：' + e.message.split(':')[0]);
+  }
+}
+
+async function testToken() {
+  try {
+    await ghApi('GET', '/user');
+    return true;
+  } catch { return false; }
 }
 
 // ========== View Routing ==========
-let currentView = 'home'; // home | editor | detail
-
 function render() {
   const app = document.getElementById('app');
   if (currentView === 'editor') {
@@ -374,9 +348,15 @@ function render() {
 function showHome() {
   currentView = 'home';
   render();
+  if (!postsLoaded) loadAndRender();
 }
 
 function showEditor() {
+  if (!authenticated) {
+    showToast('请先在首页配置 GitHub Token');
+    showHome();
+    return;
+  }
   currentView = 'editor';
   render();
 }
@@ -388,9 +368,33 @@ function showDetail(postId) {
   window.scrollTo(0, 0);
 }
 
+async function loadAndRender() {
+  const app = document.getElementById('app');
+  if (!token) {
+    app.innerHTML = renderAuthSetup();
+    return;
+  }
+  app.innerHTML = '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
+  authenticated = await testToken();
+  if (!authenticated) {
+    app.innerHTML = renderAuthSetup();
+    return;
+  }
+  await loadPosts();
+  if (!postsLoaded) {
+    app.innerHTML = '<div class="empty-state"><p>加载失败，请检查 Token 权限。</p></div>';
+    return;
+  }
+  currentView = 'home';
+  render();
+}
+
 // ========== Home View ==========
 function renderHome() {
-  const posts = getPosts();
+  if (!token) return renderAuthSetup();
+  if (!authenticated) return renderAuthSetup();
+  if (!postsLoaded) return '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
+
   if (posts.length === 0) {
     return `
       <div class="empty-state">
@@ -422,23 +426,72 @@ function renderHome() {
   return `<div class="post-list">${cards}</div>`;
 }
 
-// ========== Editor View ==========
-let tempImages = [];
+// ========== Auth Setup View ==========
+function renderAuthSetup() {
+  return `
+    <div class="auth-setup">
+      <h2>🔑 配置 GitHub Token</h2>
+      <ol>
+        <li>打开 <a href="https://github.com/settings/tokens?type=beta" target="_blank">GitHub Personal Access Tokens</a></li>
+        <li>点击 <strong>Generate new token</strong></li>
+        <li>Token 名称随便填，比如 <em>blog</em></li>
+        <li>过期时间选 <strong>No expiration</strong></li>
+        <li>勾选权限：<strong>repo</strong>（完整权限）</li>
+        <li>生成后复制 Token</li>
+      </ol>
+      <div class="token-input-row">
+        <input type="password" id="token-input" placeholder="粘贴你的 GitHub Token..." value="${token}">
+        <button class="btn-save-token" onclick="saveToken()">保存并连接</button>
+      </div>
+      <div id="auth-status"></div>
+    </div>
+    <div class="post-list" style="margin-top:24px;"></div>
+  `;
+}
 
+async function saveToken() {
+  const input = document.getElementById('token-input');
+  const val = input.value.trim();
+  if (!val) { showToast('请输入 Token'); return; }
+  token = val;
+  localStorage.setItem('gh_blog_token', token);
+  showToast('正在验证...');
+  authenticated = await testToken();
+  if (authenticated) {
+    showToast('连接成功！正在加载帖子...');
+    await loadPosts();
+    if (postsLoaded) {
+      currentView = 'home';
+      render();
+    } else {
+      render();
+    }
+  } else {
+    showToast('Token 无效，请检查');
+    localStorage.removeItem('gh_blog_token');
+    token = '';
+    render();
+  }
+}
+
+// ========== Editor View ==========
 function renderEditor() {
+  const isEdit = !!window._editingPostId;
+  const post = isEdit ? posts.find(p => p.id === window._editingPostId) : null;
+
   return `
     <div class="editor-page">
-      <h1>写新帖</h1>
+      <h1>${isEdit ? '编辑帖子' : '写新帖'}</h1>
       <div class="form-group">
         <label for="post-title">标题</label>
-        <input type="text" id="post-title" placeholder="给帖子起个标题..." maxlength="100">
+        <input type="text" id="post-title" placeholder="给帖子起个标题..." maxlength="100" value="${isEdit ? escapeAttr(post.title) : ''}">
       </div>
       <div class="form-group">
         <label for="post-content">内容</label>
-        <textarea id="post-content" placeholder="写下你的想法...&#10;&#10;支持换行和排版"></textarea>
+        <textarea id="post-content" placeholder="写下你的想法...&#10;&#10;支持换行和排版">${isEdit ? escapeHtml(post.content) : ''}</textarea>
       </div>
       <div class="form-group">
-        <label>配图（可选）</label>
+        <label>配图（可选，最多 5 张，每张 ≤ 5MB）</label>
         <div class="image-upload-area" id="upload-area">
           <p>点击或拖拽图片到这里上传</p>
           <input type="file" id="image-input" accept="image/*" multiple>
@@ -446,14 +499,14 @@ function renderEditor() {
         <div class="image-preview-grid" id="image-preview"></div>
       </div>
       <div class="editor-actions">
-        <button class="btn-publish" onclick="publishPost()">发布</button>
+        <button class="btn-publish" onclick="publishPost()">${isEdit ? '更新' : '发布'}</button>
         <button class="btn-cancel" onclick="showHome()">取消</button>
       </div>
     </div>
   `;
 }
 
-function publishPost() {
+async function publishPost() {
   const titleInput = document.getElementById('post-title');
   const contentInput = document.getElementById('post-content');
   const title = titleInput.value.trim();
@@ -462,15 +515,34 @@ function publishPost() {
   if (!title) { showToast('请输入标题'); titleInput.focus(); return; }
   if (!content) { showToast('请输入内容'); contentInput.focus(); return; }
 
-  addPost(title, content, [...tempImages]);
+  const isEdit = !!window._editingPostId;
+
+  if (isEdit) {
+    const idx = posts.findIndex(p => p.id === window._editingPostId);
+    if (idx >= 0) {
+      posts[idx].title = title;
+      posts[idx].content = content;
+      posts[idx].images = [...tempImages];
+    }
+  } else {
+    const post = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      title,
+      content,
+      images: [...tempImages],
+      createdAt: new Date().toISOString()
+    };
+    posts.unshift(post);
+  }
+
+  await savePosts();
   tempImages = [];
-  showToast('发布成功！');
-  setTimeout(() => showHome(), 400);
+  window._editingPostId = null;
+  setTimeout(() => showHome(), 500);
 }
 
 // ========== Detail View ==========
 function renderDetail(postId) {
-  const posts = getPosts();
   const post = posts.find(p => p.id === postId);
   if (!post) {
     return `<p>帖子不存在或已被删除。</p><button class="back-btn" onclick="showHome()">← 返回首页</button>`;
@@ -493,19 +565,27 @@ function renderDetail(postId) {
         <p>${escapeHtml(post.content).replace(/\n/g, '<br>')}</p>
         ${imagesHtml}
       </div>
-      <div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--border)">
-        <button class="btn-cancel" style="font-size:0.85rem;padding:6px 16px;" onclick="confirmDelete('${post.id}')">删除此帖</button>
+      <div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px;">
+        <button class="btn-cancel" style="font-size:0.85rem;padding:6px 16px;" onclick="editPost('${post.id}')">✏️ 编辑</button>
+        <button class="btn-delete" style="font-size:0.85rem;padding:6px 16px;" onclick="deletePost('${post.id}')">🗑 删除</button>
       </div>
     </div>
   `;
 }
 
-function confirmDelete(id) {
-  if (confirm('确定要删除这篇帖子吗？此操作不可撤销。')) {
-    deletePost(id);
-    showToast('已删除');
-    showHome();
-  }
+function editPost(id) {
+  window._editingPostId = id;
+  tempImages = [];
+  currentView = 'editor';
+  render();
+}
+
+async function deletePost(id) {
+  if (!confirm('确定要删除这篇帖子吗？此操作不可撤销。')) return;
+  posts = posts.filter(p => p.id !== id);
+  await savePosts();
+  showToast('已删除');
+  showHome();
 }
 
 // ========== Image Upload ==========
@@ -516,32 +596,19 @@ function initImageUpload() {
   if (!area || !input) return;
 
   area.addEventListener('click', () => input.click());
-
-  area.addEventListener('dragover', e => {
-    e.preventDefault();
-    area.style.borderColor = 'var(--accent)';
-  });
-  area.addEventListener('dragleave', () => {
-    area.style.borderColor = '';
-  });
+  area.addEventListener('dragover', e => { e.preventDefault(); area.style.borderColor = 'var(--accent)'; });
+  area.addEventListener('dragleave', () => { area.style.borderColor = ''; });
   area.addEventListener('drop', e => {
-    e.preventDefault();
-    area.style.borderColor = '';
+    e.preventDefault(); area.style.borderColor = '';
     handleFiles(e.dataTransfer.files);
   });
-
-  input.addEventListener('change', () => {
-    handleFiles(input.files);
-    input.value = '';
-  });
+  input.addEventListener('change', () => { handleFiles(input.files); input.value = ''; });
 
   function handleFiles(files) {
     Array.from(files).forEach(file => {
       if (!file.type.startsWith('image/')) return;
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('图片不能超过 5MB');
-        return;
-      }
+      if (file.size > 5 * 1024 * 1024) { showToast('图片不能超过 5MB'); return; }
+      if (tempImages.length >= 5) { showToast('最多上传 5 张图片'); return; }
       const reader = new FileReader();
       reader.onload = e => {
         tempImages.push(e.target.result);
@@ -572,7 +639,9 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
-
+function escapeAttr(str) {
+  return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 function formatDate(iso) {
   const d = new Date(iso);
   const now = new Date();
@@ -583,18 +652,16 @@ function formatDate(iso) {
   if (diff < 604800000) return Math.floor(diff / 86400000) + ' 天前';
   return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
 }
-
 function formatDateLong(iso) {
   const d = new Date(iso);
   return d.getFullYear() + ' 年 ' + (d.getMonth()+1) + ' 月 ' + d.getDate() + ' 日 ' +
     String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
 }
-
 function showToast(msg) {
   const toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
+  setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
 // ========== Init ==========

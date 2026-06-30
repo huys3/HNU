@@ -396,6 +396,7 @@ let postsLoaded = false;
 let showingAuthSetup = false;
 let searchQuery = '';
 let commentsMap = loadCommentsMap();
+const localImageMap = new Map();
 
 async function ghApi(method, path, body) {
   const url = `https://api.github.com/repos/${CONFIG.OWNER}/${CONFIG.REPO}${path}`;
@@ -1016,10 +1017,15 @@ function initImageUpload() {
           }
           try {
             showToast('上传图片中...');
-            const { filename } = await uploadImageToRepo(file);
-            const url = getImageUrl(filename);
-            tempImages.push(url);
-            insertImageIntoTextarea(url, textarea);
+            const compressed = await compressImage(file);
+            const githubUrl = await (async () => {
+              const { filename } = await uploadImageToRepo(file);
+              return getImageUrl(filename);
+            })();
+            // Store mapping: githubUrl → local data URL for immediate preview
+            localImageMap.set(githubUrl, compressed);
+            tempImages.push(githubUrl);
+            insertImageIntoTextarea(githubUrl, textarea);
             renderPreviews();
             if (previewPane) {
               previewPane.innerHTML = renderMarkdown(textarea.value);
@@ -1061,10 +1067,14 @@ function initImageUpload() {
 
       try {
         showToast('上传图片中...');
-        const { filename } = await uploadImageToRepo(file);
-        const url = getImageUrl(filename);
-        tempImages.push(url);
-        insertImageIntoTextarea(url, textarea);
+        const compressed = await compressImage(file);
+        const githubUrl = await (async () => {
+          const { filename } = await uploadImageToRepo(file);
+          return getImageUrl(filename);
+        })();
+        localImageMap.set(githubUrl, compressed);
+        tempImages.push(githubUrl);
+        insertImageIntoTextarea(githubUrl, textarea);
         renderPreviews();
         if (textarea && previewPane) {
           previewPane.innerHTML = renderMarkdown(textarea.value);
@@ -1087,7 +1097,9 @@ function initImageUpload() {
   }
 
   window.removeImage = function(index) {
+    const removedUrl = tempImages[index];
     tempImages.splice(index, 1);
+    localImageMap.delete(removedUrl);
     // Remove corresponding markdown from textarea and update preview
     if (textarea) {
       const imageMdRegex = /\n\n!\[图片\]\([^)]+\)\n\n$/;
@@ -1100,18 +1112,18 @@ function initImageUpload() {
   };
 }
 
-function insertImageIntoTextarea(url, textarea) {
-  if (!textarea) return;
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const text = textarea.value;
-  const imageMarkdown = '\n\n![图片](' + url + ')\n\n';
-  const newValue = text.slice(0, start) + imageMarkdown + text.slice(end);
-  textarea.value = newValue;
-  const cursorPos = start + imageMarkdown.length;
-  textarea.setSelectionRange(cursorPos, cursorPos);
-  textarea.focus();
-}
+function insertImageIntoTextarea(githubUrl, textarea) {
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const imageMarkdown = '\n\n![图片](' + githubUrl + ')\n\n';
+    const newValue = text.slice(0, start) + imageMarkdown + text.slice(end);
+    textarea.value = newValue;
+    const cursorPos = start + imageMarkdown.length;
+    textarea.setSelectionRange(cursorPos, cursorPos);
+    textarea.focus();
+  }
 
 function initImagePreview() {
   const isEdit = !!window._editingPostId;
@@ -1218,10 +1230,24 @@ function deleteComment(postId, commentId) {
   }
 }
 
+function resolveImageUrl(url) {
+  // If this GitHub URL has a local data URL mapped, use it for immediate display
+  if (localImageMap.has(url)) {
+    return localImageMap.get(url);
+  }
+  return url;
+}
+
 function renderMarkdown(markdown) {
   if (!markdown) return '';
 
-  const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+  // Resolve any local data URLs before rendering
+  const resolvedMarkdown = markdown.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+    const resolvedSrc = resolveImageUrl(src);
+    return `![${alt}](${resolvedSrc})`;
+  });
+
+  const lines = resolvedMarkdown.replace(/\r\n/g, '\n').split('\n');
   let html = '';
   let paragraphLines = [];
   let inCodeBlock = false;

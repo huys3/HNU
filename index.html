@@ -295,8 +295,12 @@ async function loadPosts() {
   try {
     const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
     if (data.content) {
-      const decoded = atob(data.content);
-      posts = JSON.parse(decoded);
+      // 使用 TextDecoder 正确处理 UTF-8 编码的中文
+      const binary = atob(data.content);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const json = new TextDecoder('utf-8').decode(bytes);
+      posts = JSON.parse(json);
     } else {
       posts = [];
     }
@@ -316,7 +320,11 @@ async function loadPosts() {
 async function savePosts() {
   if (!token) { showToast('请先配置 GitHub Token'); return; }
   try {
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(posts, null, 2))));
+    const json = JSON.stringify(posts, null, 2);
+    // 使用 TextEncoder 将 UTF-8 文本转为二进制，再转 base64
+    const bytes = new TextEncoder().encode(json);
+    const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
+    const encoded = btoa(binary);
 
     // 先尝试获取当前 SHA
     let sha = null;

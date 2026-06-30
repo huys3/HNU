@@ -504,7 +504,16 @@ async function savePosts() {
       if (e.message.includes('409')) {
         const latest = await fetchRemotePostsWithSha();
         if (!latest.sha) throw e;
-        const mergedPosts = mergePosts(latest.posts || [], posts);
+        // Start from remote (authoritative), then add any local-only posts
+        const mergedPosts = latest.posts.map(remote => {
+          const local = posts.find(p => p.id === remote.id);
+          return local || remote;
+        });
+        posts.forEach(local => {
+          if (!latest.posts.some(remote => remote.id === local.id)) {
+            mergedPosts.push(local);
+          }
+        });
         posts = mergedPosts;
         json = JSON.stringify(posts, null, 2);
         encoded = encodePayload(json);

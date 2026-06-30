@@ -95,15 +95,15 @@
 
   /* ===== 首页 ===== */
   .post-list { display: flex; flex-direction: column; gap: 16px; }
-  .post-card {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 24px;
-    cursor: pointer;
-    transition: box-shadow 0.2s, transform 0.15s;
-    border: 1px solid var(--border);
+  .post-card { position: relative; }
+  .post-card .post-delete-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: transparent; color: var(--red); border: 1px solid var(--red);
+    padding: 4px 10px; border-radius: 6px; font-size: 0.82rem; cursor: pointer;
+    transition: all 0.15s; opacity: 0;
   }
+  .post-card:hover .post-delete-btn { opacity: 1; }
+  .post-card .post-delete-btn:hover { background: var(--red); color: #fff; }
   .post-card:hover {
     box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
@@ -676,6 +676,7 @@ function renderHome() {
       : '';
     return `
       <article class="post-card" onclick="showDetail('${post.id}')">
+        ${authenticated ? '<button class="post-delete-btn" onclick="event.stopPropagation(); deletePost(\'' + post.id + '\')">删除</button>' : ''}
         <h2>${escapeHtml(post.title)}</h2>
         <div class="post-meta">
           <span>📅 ${date}</span>

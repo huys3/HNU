@@ -482,7 +482,7 @@ async function saveToken() {
     // 可能是 Fine-grained token 不支持 /user 端点，尝试直接访问仓库
     showToast('正在尝试直接连接仓库...');
     try {
-      await ghApi('GET', '/contents/README.md');
+      await ghApi('GET', '/contents/index.html');
       authenticated = true;
       await loadPosts();
       if (postsLoaded) {

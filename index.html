@@ -234,8 +234,14 @@
   .detail-body {
     font-size: 1.02rem; line-height: 1.85; white-space: pre-wrap; word-break: break-word;
   }
-  .detail-body img {
-    max-width: 100%; border-radius: 8px; margin: 16px 0; box-shadow: var(--shadow);
+  .detail-body .content-block {
+    margin-bottom: 18px;
+  }
+  .detail-body .content-image {
+    margin: 16px 0;
+  }
+  .detail-body .content-image img {
+    max-width: 100%; border-radius: 8px; box-shadow: var(--shadow);
   }
 
   .toast {
@@ -509,14 +515,8 @@ async function loadAndRender() {
 function renderHome() {
   if (!postsLoaded) return '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
 
-  const readerHint = !authenticated ? `
-    <div class="empty-state" style="margin-top:24px; border-left: 4px solid var(--accent); text-align:left;">
-      <p><strong>当前为阅读模式</strong>。点击右上角 “⚙️ 配置” 可输入 GitHub Token 后发布或修改文章。</p>
-    </div>
-  ` : '';
-
   if (posts.length === 0) {
-    return readerHint + `
+    return `
       <div class="empty-state" style="margin-top:24px;">
         <p>还没有文章，快去写一篇吧！</p>
         ${authenticated ? '<button class="btn-new-post" onclick="showEditor()">✍️ 写文章</button>' : ''}
@@ -543,7 +543,7 @@ function renderHome() {
     `;
   }).join('');
 
-  return readerHint + `<div class="post-list" style="margin-top:24px;">${cards}</div>`;
+  return `<div class="post-list" style="margin-top:24px;">${cards}</div>`;
 }
 
 function renderAuthSetup() {
@@ -712,9 +712,22 @@ function renderDetail(postId) {
   }
 
   const date = formatDateLong(post.createdAt);
-  const imagesHtml = (post.images && post.images.length > 0)
-    ? post.images.map(src => `<img src="${src}" alt="" loading="lazy">`).join('')
-    : '';
+  const paragraphs = (post.content || '').split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  const images = Array.isArray(post.images) ? post.images : [];
+  const contentBlocks = [];
+
+  paragraphs.forEach((paragraph, index) => {
+    const textHtml = escapeHtml(paragraph).replace(/\n/g, '<br>');
+    const imageHtml = images[index]
+      ? `<div class="content-image"><img src="${images[index]}" alt="" loading="lazy"></div>`
+      : '';
+    contentBlocks.push(`<div class="content-block">${textHtml}${imageHtml}</div>`);
+  });
+
+  const remainingImages = images.slice(paragraphs.length);
+  remainingImages.forEach(src => {
+    contentBlocks.push(`<div class="content-image"><img src="${src}" alt="" loading="lazy"></div>`);
+  });
 
   const editButtons = authenticated ? `
     <div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px;">
@@ -729,11 +742,10 @@ function renderDetail(postId) {
       <h1>${escapeHtml(post.title)}</h1>
       <div class="post-meta">
         <span>📅 ${date}</span>
-        ${post.images && post.images.length > 0 ? `<span>🖼️ ${post.images.length} 张图</span>` : ''}
+        ${images.length > 0 ? `<span>🖼️ ${images.length} 张图</span>` : ''}
       </div>
       <div class="detail-body">
-        <p>${escapeHtml(post.content).replace(/\n/g, '<br>')}</p>
-        ${imagesHtml}
+        ${contentBlocks.join('') || '<p>暂无内容</p>'}
       </div>
       ${editButtons}
     </div>

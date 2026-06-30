@@ -742,7 +742,7 @@ function renderEditor() {
       </div>
       <div class="form-group">
         <label for="post-content">内容 (约 ${Math.round(CONFIG.MAX_CONTENT_LENGTH / 1000)}KB)</label>
-        <textarea id="post-content" placeholder="支持 Markdown 语法，例如 # 标题、**加粗**、- 列表、![图片](url)" maxlength="${CONFIG.MAX_CONTENT_LENGTH}">${isEdit ? escapeHtml(post.content) : ''}</textarea>
+        <textarea id="post-content" placeholder="支持 Markdown 语法，例如 # 标题、**加粗**、- 列表，点击图片区可插入内联图片" maxlength="${CONFIG.MAX_CONTENT_LENGTH}">${isEdit ? escapeHtml(post.content) : ''}</textarea>
       </div>
       <div class="form-group">
         <label>配图(选填，最多 ${CONFIG.MAX_IMAGES} 张，每张 ≤ ${Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024)}MB，自动压缩)</label>
@@ -1139,16 +1139,31 @@ function renderMarkdown(markdown) {
 
 function renderInlineMarkdown(text) {
   let html = text;
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
-    return '<img src="' + src + '" alt="' + escapeAttr(alt) + '" loading="lazy">';
+  // Extract images first to protect them from escapeHtml
+  const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  const images = [];
+  html = html.replace(imageRegex, (match, alt, src) => {
+    const placeholder = `__IMG_${images.length}__`;
+    images.push('<img src="' + src + '" alt="' + escapeAttr(alt) + '" loading="lazy">');
+    return placeholder;
   });
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
-    return '<a href="' + escapeAttr(url) + '" target="_blank" rel="noopener">' + escapeHtml(linkText) + '</a>';
+  // Extract links similarly
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const links = [];
+  html = html.replace(linkRegex, (match, linkText, url) => {
+    const placeholder = `__LINK_${links.length}__`;
+    links.push('<a href="' + escapeAttr(url) + '" target="_blank" rel="noopener">' + escapeHtml(linkText) + '</a>');
+    return placeholder;
   });
+  // Escape remaining HTML-safe text
   html = escapeHtml(html);
+  // Restore inline formatting (code, bold, italic) on escaped text
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  // Restore images and links
+  images.forEach((img, i) => { html = html.replace(`__IMG_${i}__`, img); });
+  links.forEach((link, i) => { html = html.replace(`__LINK_${i}__`, link); });
   return html;
 }
 

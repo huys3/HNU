@@ -1,11 +1,10 @@
-
-&lt;!DOCTYPE html&gt;
-&lt;html lang="zh-CN"&gt;
-&lt;head&gt;
-&lt;meta charset="UTF-8"&gt;
-&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
-&lt;title&gt;ÎÒµÄ²©¿Í&lt;/title&gt;
-&lt;style&gt;
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>æˆ‘çš„åšå®¢</title>
+<style>
   :root {
     --bg: #fafafa;
     --card-bg: #ffffff;
@@ -51,24 +50,50 @@
     text-decoration: none;
   }
   .site-title:hover { color: var(--accent); }
-  .btn-new-post {
+  
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  
+  .btn-config, .btn-new-post {
     background: var(--accent);
     color: #fff;
     border: none;
-    padding: 8px 18px;
+    padding: 8px 16px;
     border-radius: 8px;
     font-size: 0.9rem;
     cursor: pointer;
     font-weight: 500;
     transition: background 0.2s;
   }
-  .btn-new-post:hover { background: var(--accent-hover); }
+  .btn-config:hover, .btn-new-post:hover { 
+    background: var(--accent-hover); 
+  }
+  
+  .btn-logout {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover {
+    border-color: var(--text-secondary);
+    color: var(--text);
+  }
+  
   main {
     max-width: 720px;
     margin: 0 auto;
     padding: 24px 20px 60px;
   }
 
+  /* ===== é¦–é¡µ ===== */
   .post-list { display: flex; flex-direction: column; gap: 16px; }
   .post-card {
     background: var(--card-bg);
@@ -96,6 +121,7 @@
   .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
   .empty-state p { margin-bottom: 16px; }
 
+  /* ===== ç¼–è¾‘å™¨ ===== */
   .editor-page { animation: fadeIn 0.2s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   .editor-page h1 { font-size: 1.5rem; margin-bottom: 20px; }
@@ -112,6 +138,7 @@
     box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
   }
   .form-group textarea { min-height: 260px; resize: vertical; }
+  
   .image-upload-area {
     border: 2px dashed var(--border); border-radius: 8px; padding: 24px;
     text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
@@ -119,6 +146,7 @@
   }
   .image-upload-area:hover { border-color: var(--accent); background: rgba(37,99,235,0.03); }
   .image-upload-area input[type="file"] { display: none; }
+  
   .image-preview-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
   .image-preview-item {
     position: relative; width: 100px; height: 100px; border-radius: 6px;
@@ -131,6 +159,7 @@
     border: none; font-size: 14px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
+  
   .editor-actions { display: flex; gap: 10px; margin-top: 24px; }
   .btn-publish {
     background: var(--accent); color: #fff; border: none; padding: 10px 28px;
@@ -150,6 +179,7 @@
   }
   .btn-delete:hover { background: var(--red); color: #fff; }
 
+  /* ===== Token é…ç½® ===== */
   .auth-setup {
     background: #fef3c7; border: 1px solid #f59e0b; border-radius: 10px;
     padding: 24px; margin-bottom: 24px;
@@ -188,6 +218,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ===== è¯¦æƒ…é¡µ ===== */
   .detail-page { animation: fadeIn 0.2s ease; }
   .back-btn {
     background: none; border: none; color: var(--accent); cursor: pointer;
@@ -224,23 +255,29 @@
     .post-card h2 { font-size: 1.08rem; }
     .detail-page h1 { font-size: 1.4rem; }
     .image-preview-item { width: 80px; height: 80px; }
-    .auth-setup .token-input-row { flex-direction: column; }
+    .header-actions { flex-wrap: wrap; }
   }
-&lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
+  
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
 
-&lt;header&gt;
-  &lt;div class="header-inner"&gt;
-    &lt;span class="site-title" onclick="showHome()"&gt;ÎÒµÄ²©¿Í&lt;/span&gt;
-    &lt;button class="btn-new-post" onclick="showEditor()"&gt;£« Ğ´ĞÂÌû&lt;/button&gt;
-  &lt;/div&gt;
-&lt;/header&gt;
+<header>
+  <div class="header-inner">
+    <span class="site-title" onclick="showHome()">ğŸ“ æˆ‘çš„åšå®¢</span>
+    <div class="header-actions">
+      <button id="btn-config" class="btn-config" onclick="toggleAuthSetup()" style="display:none;">âš™ï¸ é…ç½®</button>
+      <button id="btn-new-post" class="btn-new-post" onclick="showEditor()" style="display:none;">âœï¸ å†™æ–‡ç« </button>
+      <button id="btn-logout" class="btn-logout" onclick="logout()" style="display:none;">é€€å‡º</button>
+    </div>
+  </div>
+</header>
 
-&lt;main id="app"&gt;&lt;/main&gt;
-&lt;div class="toast" id="toast"&gt;&lt;/div&gt;
+<main id="app"></main>
+<div class="toast" id="toast"></div>
 
-&lt;script&gt;
+<script>
 const CONFIG = {
   OWNER: 'huys3',
   REPO: 'HNU',
@@ -260,6 +297,7 @@ let tempImages = [];
 let token = localStorage.getItem('gh_blog_token') || '';
 let authenticated = false;
 let postsLoaded = false;
+let showingAuthSetup = false;
 
 async function ghApi(method, path, body) {
   const url = `https://api.github.com/repos/${CONFIG.OWNER}/${CONFIG.REPO}${path}`;
@@ -279,10 +317,10 @@ async function ghApi(method, path, body) {
   }
   const res = await fetch(url, opts);
   if (!res.ok) {
-    const errObj = await res.json().catch(() =&gt; null);
+    const errObj = await res.json().catch(() => null);
     let errMsg = `${method} ${path}: ${res.status}`;
-    if (errObj &amp;&amp; errObj.message) errMsg += ' ' + errObj.message;
-    if (errObj &amp;&amp; errObj.documentation_url) errMsg += ' (' + errObj.documentation_url + ')';
+    if (errObj && errObj.message) errMsg += ' ' + errObj.message;
+    if (errObj && errObj.documentation_url) errMsg += ' (' + errObj.documentation_url + ')';
     throw new Error(errMsg);
   }
   if (method === 'HEAD') return res;
@@ -302,7 +340,7 @@ async function loadPosts() {
     if (data.content) {
       const binary = atob(data.content);
       const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i &lt; binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       const json = new TextDecoder('utf-8').decode(bytes);
       posts = JSON.parse(json);
     } else {
@@ -317,11 +355,11 @@ async function loadPosts() {
 }
 
 async function savePosts() {
-  if (!token || !authenticated) { showToast('ÇëÏÈÅäÖÃ GitHub Token'); return; }
+  if (!token || !authenticated) { showToast('è¯·é…ç½® GitHub Token'); return; }
   try {
     const json = JSON.stringify(posts, null, 2);
     const bytes = new TextEncoder().encode(json);
-    const binary = Array.from(bytes, b =&gt; String.fromCharCode(b)).join('');
+    const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
     const encoded = btoa(binary);
 
     let sha = null;
@@ -337,10 +375,10 @@ async function savePosts() {
       branch: CONFIG.BRANCH,
       ...(sha ? { sha: sha } : {})
     });
-    showToast('±£´æ³É¹¦£¡');
+    showToast('ä¿å­˜æˆåŠŸï¼');
   } catch (e) {
     console.error('Save posts failed:', e);
-    showToast('±£´æÊ§°Ü£º' + e.message);
+    showToast('ä¿å­˜å¤±è´¥ï¼š' + e.message);
   }
 }
 
@@ -359,16 +397,16 @@ async function testToken() {
 }
 
 async function compressImage(file) {
-  return new Promise((resolve, reject) =&gt; {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) =&gt; {
+    reader.onload = (e) => {
       const img = new Image();
-      img.onload = () =&gt; {
+      img.onload = () => {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
         
-        if (width &gt; CONFIG.IMAGE_MAX_WIDTH || height &gt; CONFIG.IMAGE_MAX_HEIGHT) {
-          if (width &gt; height) {
+        if (width > CONFIG.IMAGE_MAX_WIDTH || height > CONFIG.IMAGE_MAX_HEIGHT) {
+          if (width > height) {
             height = Math.round((height * CONFIG.IMAGE_MAX_WIDTH) / width);
             width = CONFIG.IMAGE_MAX_WIDTH;
           } else {
@@ -383,9 +421,9 @@ async function compressImage(file) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
         
-        canvas.toBlob((blob) =&gt; {
+        canvas.toBlob((blob) => {
           const compressedReader = new FileReader();
-          compressedReader.onload = () =&gt; resolve(compressedReader.result);
+          compressedReader.onload = () => resolve(compressedReader.result);
           compressedReader.onerror = reject;
           compressedReader.readAsDataURL(blob);
         }, 'image/jpeg', CONFIG.IMAGE_QUALITY);
@@ -402,16 +440,22 @@ function render() {
   const app = document.getElementById('app');
   if (currentView === 'editor') {
     app.innerHTML = renderEditor();
-    setTimeout(() =&gt; { initImageUpload(); initImagePreview(); }, 50);
+    setTimeout(() => { initImageUpload(); initImagePreview(); }, 50);
   } else if (currentView === 'detail') {
     app.innerHTML = renderDetail(window._currentPostId);
   } else {
-    app.innerHTML = renderHome();
+    let html = '';
+    if (showingAuthSetup && authenticated) {
+      html = renderAuthSetup();
+    }
+    html += renderHome();
+    app.innerHTML = html;
   }
 }
 
 function showHome() {
   currentView = 'home';
+  showingAuthSetup = false;
   render();
   if (!postsLoaded) loadAndRender();
 }
@@ -434,19 +478,21 @@ function showDetail(postId) {
 
 async function loadAndRender() {
   const app = document.getElementById('app');
-  app.innerHTML = '&lt;div class="loading"&gt;&lt;div class="spinner"&gt;&lt;/div&gt;&lt;p&gt;¼ÓÔØÖĞ...&lt;/p&gt;&lt;/div&gt;';
+  app.innerHTML = '<div class="loading"><div class="spinner"></div><p>åŠ è½½ä¸­...</p></div>';
   authenticated = !!token;
   await loadPosts();
   if (!postsLoaded) {
-    app.innerHTML = '&lt;div class="empty-state"&gt;&lt;p&gt;¼ÓÔØÊ§°Ü¡£&lt;/p&gt;&lt;/div&gt;';
+    app.innerHTML = '<div class="empty-state"><p>åŠ è½½å¤±è´¥ã€‚</p></div>';
     return;
   }
   currentView = 'home';
+  showingAuthSetup = false;
+  updateHeaderButtons();
   render();
 }
 
 function renderHome() {
-  if (!postsLoaded) return '&lt;div class="loading"&gt;&lt;div class="spinner"&gt;&lt;/div&gt;&lt;p&gt;¼ÓÔØÖĞ...&lt;/p&gt;&lt;/div&gt;';
+  if (!postsLoaded) return '<div class="loading"><div class="spinner"></div><p>åŠ è½½ä¸­...</p></div>';
 
   let authSection = '';
   if (!authenticated) {
@@ -455,94 +501,102 @@ function renderHome() {
 
   if (posts.length === 0) {
     return authSection + `
-      &lt;div class="empty-state" style="margin-top:24px;"&gt;
-        &lt;p&gt;»¹Ã»ÓĞÌû×Ó£¬À´Ğ´Ò»Æª°É£¡&lt;/p&gt;
-        ${authenticated ? '&lt;button class="btn-new-post" onclick="showEditor()"&gt;£« Ğ´ĞÂÌû&lt;/button&gt;' : ''}
-      &lt;/div&gt;
+      <div class="empty-state" style="margin-top:24px;">
+        <p>è¿˜æ²¡æœ‰æ–‡ç« ï¼Œå¿«å»å†™ä¸€ç¯‡å§ï¼</p>
+        ${authenticated ? '<button class="btn-new-post" onclick="showEditor()">âœï¸ å†™æ–‡ç« </button>' : ''}
+      </div>
     `;
   }
 
-  const cards = posts.map(post =&gt; {
+  const cards = posts.map(post => {
     const date = formatDate(post.createdAt);
     const summary = post.content.slice(0, 150);
-    const thumbHtml = post.images &amp;&amp; post.images.length &gt; 0
-      ? `&lt;img class="post-thumb" src="${post.images[0]}" alt=""&gt;`
+    const thumbHtml = post.images && post.images.length > 0
+      ? `<img class="post-thumb" src="${post.images[0]}" alt="">`
       : '';
     return `
-      &lt;article class="post-card" onclick="showDetail('${post.id}')"&gt;
-        &lt;h2&gt;${escapeHtml(post.title)}&lt;/h2&gt;
-        &lt;div class="post-meta"&gt;
-          &lt;span&gt;${date}&lt;/span&gt;
-          ${post.images &amp;&amp; post.images.length &gt; 0 ? `&lt;span&gt;? ${post.images.length} ÕÅÍ¼&lt;/span&gt;` : ''}
-        &lt;/div&gt;
-        &lt;div class="post-summary"&gt;${escapeHtml(summary)}&lt;/div&gt;
+      <article class="post-card" onclick="showDetail('${post.id}')">
+        <h2>${escapeHtml(post.title)}</h2>
+        <div class="post-meta">
+          <span>ğŸ“… ${date}</span>
+          ${post.images && post.images.length > 0 ? `<span>ğŸ–¼ï¸ ${post.images.length} å¼ å›¾</span>` : ''}
+        </div>
+        <div class="post-summary">${escapeHtml(summary)}</div>
         ${thumbHtml}
-      &lt;/article&gt;
+      </article>
     `;
   }).join('');
 
-  return authSection + `&lt;div class="post-list" style="margin-top:24px;"&gt;${cards}&lt;/div&gt;` +
-    (authenticated ? '&lt;div style="text-align:center;margin-top:24px;"&gt;&lt;button class="btn-new-post" onclick="showEditor()"&gt;£« Ğ´ĞÂÌû&lt;/button&gt;&lt;/div&gt;' : '');
+  return authSection + `<div class="post-list" style="margin-top:24px;">${cards}</div>`;
 }
 
 function renderAuthSetup() {
   return `
-    &lt;div class="auth-setup"&gt;
-      &lt;h2&gt;? ÅäÖÃ GitHub Token (½ö²©Ö÷¿É¼û)&lt;/h2&gt;
-      &lt;ol&gt;
-        &lt;li&gt;´ò¿ª &lt;a href="https://github.com/settings/tokens?type=beta" target="_blank"&gt;Fine-grained tokens&lt;/a&gt; Ò³Ãæ&lt;/li&gt;
-        &lt;li&gt;µã»÷ &lt;strong&gt;Generate new token&lt;/strong&gt;&lt;/li&gt;
-        &lt;li&gt;Token Ãû³ÆËæ±ãÌî£¬±ÈÈç &lt;em&gt;blog&lt;/em&gt;&lt;/li&gt;
-        &lt;li&gt;¹ıÆÚÊ±¼äÑ¡ &lt;strong&gt;No expiration&lt;/strong&gt;&lt;/li&gt;
-        &lt;li&gt;Repository access Ñ¡ &lt;strong&gt;Only select repositories&lt;/strong&gt;£¬Ñ¡Ôñ &lt;strong&gt;${CONFIG.REPO}&lt;/strong&gt;&lt;/li&gt;
-        &lt;li&gt;Permissions ¡ú Contents: Ñ¡ &lt;strong&gt;Read and write&lt;/strong&gt;&lt;/li&gt;
-        &lt;li&gt;µã»÷ &lt;strong&gt;Generate token&lt;/strong&gt;£¬¸´ÖÆ Token&lt;/li&gt;
-      &lt;/ol&gt;
-      &lt;div class="token-input-row"&gt;
-        &lt;input type="password" id="token-input" placeholder="Õ³ÌùÄãµÄ GitHub Token..." value="${token}"&gt;
-        &lt;button class="btn-save-token" onclick="saveToken()"&gt;±£´æ²¢Á¬½Ó&lt;/button&gt;
-      &lt;/div&gt;
-      &lt;div id="auth-status"&gt;&lt;/div&gt;
-    &lt;/div&gt;
+    <div class="auth-setup">
+      <h2>âš™ï¸ é…ç½® GitHub Token (åªæœ‰ä¸€æ¬¡)</h2>
+      <ol>
+        <li>æ‰“å¼€ <a href="https://github.com/settings/tokens?type=beta" target="_blank">Fine-grained tokens</a> é¡µé¢</li>
+        <li>ç‚¹å‡» <strong>Generate new token</strong></li>
+        <li>Token åç§°éšä¾¿å¡«ï¼Œæ¯”å¦‚ <em>blog</em></li>
+        <li>æœ‰æ•ˆæœŸé€‰ <strong>No expiration</strong></li>
+        <li>Repository access é€‰ <strong>Only select repositories</strong>ï¼Œé€‰æ‹© <strong>${CONFIG.REPO}</strong></li>
+        <li>Permissions çš„ Contents: é€‰ <strong>Read and write</strong></li>
+        <li>ç‚¹å‡» <strong>Generate token</strong>ï¼Œå¤åˆ¶ Token</li>
+      </ol>
+      <div class="token-input-row">
+        <input type="password" id="token-input" placeholder="ç²˜è´´ä½ çš„ GitHub Token..." value="${token}">
+        <button class="btn-save-token" onclick="saveToken()">ä¿å­˜éªŒè¯</button>
+      </div>
+      <div id="auth-status"></div>
+    </div>
   `;
+}
+
+function toggleAuthSetup() {
+  showingAuthSetup = !showingAuthSetup;
+  render();
 }
 
 async function saveToken() {
   const input = document.getElementById('token-input');
   const val = input.value.trim();
-  if (!val) { showToast('ÇëÊäÈë Token'); return; }
+  if (!val) { showToast('è¯·è¾“å…¥ Token'); return; }
   token = val;
   localStorage.setItem('gh_blog_token', token);
-  showToast('ÕıÔÚÑéÖ¤...');
+  showToast('éªŒè¯ä¸­...');
 
   authenticated = await testToken();
   if (authenticated) {
-    showToast('Á¬½Ó³É¹¦£¡ÕıÔÚ¼ÓÔØÌû×Ó...');
+    showToast('è¿æ¥æˆåŠŸï¼ŒåŠ è½½æ–‡ç« ä¸­...');
     await loadPosts();
     if (postsLoaded) {
+      updateHeaderButtons();
       currentView = 'home';
+      showingAuthSetup = false;
       render();
     } else {
       render();
     }
   } else {
-    showToast('ÕıÔÚ³¢ÊÔÖ±½ÓÁ¬½Ó²Ö¿â...');
+    showToast('éªŒè¯å¤±è´¥ï¼Œæ£€æŸ¥ Token æ˜¯å¦æœ‰æ•ˆ');
     try {
       await ghApi('GET', '/contents/index.html');
       authenticated = true;
       await loadPosts();
       if (postsLoaded) {
+        updateHeaderButtons();
         currentView = 'home';
+        showingAuthSetup = false;
         render();
       } else {
-        showToast('Token È¨ÏŞ²»×ã£¬Çë¼ì²éÊÇ·ñÊÚÓèÁË ' + CONFIG.REPO + ' ²Ö¿âµÄ Contents ¶ÁĞ´È¨ÏŞ');
+        showToast('Token æƒé™ä¸è¶³ï¼Œè¯·æ£€æŸ¥æ˜¯å¦æ‹¥æœ‰ ' + CONFIG.REPO + ' ä»“åº“çš„ Contents è¯»å†™æƒé™');
         localStorage.removeItem('gh_blog_token');
         token = '';
         authenticated = false;
         render();
       }
     } catch (e) {
-      showToast('Token ÎŞĞ§»òÈ¨ÏŞ²»×ã£º' + e.message.split(':')[0]);
+      showToast('Token æ— æ•ˆæˆ–æƒé™ä¸è¶³ï¼š' + e.message.split(':')[0]);
       localStorage.removeItem('gh_blog_token');
       token = '';
       authenticated = false;
@@ -553,65 +607,65 @@ async function saveToken() {
 
 function renderEditor() {
   if (!authenticated) {
-    return '&lt;div class="empty-state"&gt;&lt;p&gt;ÇëÏÈÅäÖÃ Token&lt;/p&gt;&lt;button class="btn-new-post" onclick="showHome()"&gt;·µ»ØÊ×Ò³&lt;/button&gt;&lt;/div&gt;';
+    return '<div class="empty-state"><p>è¯·å…ˆé…ç½® Token</p><button class="btn-new-post" onclick="toggleAuthSetup()">é…ç½® Token</button></div>';
   }
 
   const isEdit = !!window._editingPostId;
-  const post = isEdit ? posts.find(p =&gt; p.id === window._editingPostId) : null;
-  if (isEdit &amp;&amp; post &amp;&amp; post.images) {
+  const post = isEdit ? posts.find(p => p.id === window._editingPostId) : null;
+  if (isEdit && post && post.images) {
     tempImages = [...post.images];
   } else {
     tempImages = [];
   }
 
   return `
-    &lt;div class="editor-page"&gt;
-      &lt;h1&gt;${isEdit ? '±à¼­Ìû×Ó' : 'Ğ´ĞÂÌû'}&lt;/h1&gt;
-      &lt;div class="form-group"&gt;
-        &lt;label for="post-title"&gt;±êÌâ&lt;/label&gt;
-        &lt;input type="text" id="post-title" placeholder="¸øÌû×ÓÆğ¸ö±êÌâ..." maxlength="100" value="${isEdit ? escapeAttr(post.title) : ''}"&gt;
-      &lt;/div&gt;
-      &lt;div class="form-group"&gt;
-        &lt;label for="post-content"&gt;ÄÚÈİ (×î¶à ${Math.round(CONFIG.MAX_CONTENT_LENGTH / 1000)}KB)&lt;/label&gt;
-        &lt;textarea id="post-content" placeholder="Ğ´ÏÂÄãµÄÏë·¨...&amp;#10;&amp;#10;Ö§³Ö»»ĞĞºÍÅÅ°æ" maxlength="${CONFIG.MAX_CONTENT_LENGTH}"&gt;${isEdit ? escapeHtml(post.content) : ''}&lt;/textarea&gt;
-      &lt;/div&gt;
-      &lt;div class="form-group"&gt;
-        &lt;label&gt;ÅäÍ¼£¨¿ÉÑ¡£¬×î¶à ${CONFIG.MAX_IMAGES} ÕÅ£¬Ã¿ÕÅ ¡Ü ${Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024)}MB£¬×Ô¶¯Ñ¹Ëõ£©&lt;/label&gt;
-        &lt;div class="image-upload-area" id="upload-area"&gt;
-          &lt;p&gt;µã»÷»òÍÏ×§Í¼Æ¬µ½ÕâÀïÉÏ´«&lt;/p&gt;
-          &lt;input type="file" id="image-input" accept="image/*" multiple&gt;
-        &lt;/div&gt;
-        &lt;div class="image-preview-grid" id="image-preview"&gt;&lt;/div&gt;
-      &lt;/div&gt;
-      &lt;div class="editor-actions"&gt;
-        &lt;button class="btn-publish" onclick="publishPost()"&gt;${isEdit ? '¸üĞÂ' : '·¢²¼'}&lt;/button&gt;
-        &lt;button class="btn-cancel" onclick="showHome()"&gt;È¡Ïû&lt;/button&gt;
-        ${isEdit ? '&lt;button class="btn-delete" onclick="deletePost(\'' + post.id + '\')"&gt;É¾³ı&lt;/button&gt;' : ''}
-      &lt;/div&gt;
-    &lt;/div&gt;
+    <div class="editor-page">
+      <h1>${isEdit ? 'ç¼–è¾‘æ–‡ç« ' : 'å†™æ–‡ç« '}</h1>
+      <div class="form-group">
+        <label for="post-title">æ ‡é¢˜</label>
+        <input type="text" id="post-title" placeholder="è¾“å…¥æ–‡ç« æ ‡é¢˜..." maxlength="100" value="${isEdit ? escapeAttr(post.title) : ''}">
+      </div>
+      <div class="form-group">
+        <label for="post-content">å†…å®¹ (çº¦ ${Math.round(CONFIG.MAX_CONTENT_LENGTH / 1000)}KB)</label>
+        <textarea id="post-content" placeholder="å†™å†…å®¹...&#10;&#10;æ”¯æŒæ¢è¡Œç©ºç™½" maxlength="${CONFIG.MAX_CONTENT_LENGTH}">${isEdit ? escapeHtml(post.content) : ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label>é…å›¾(é€‰å¡«ï¼Œæœ€å¤š ${CONFIG.MAX_IMAGES} å¼ ï¼Œæ¯å¼  â‰¤ ${Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024)}MBï¼Œè‡ªåŠ¨å‹ç¼©)</label>
+        <div class="image-upload-area" id="upload-area">
+          <p>ç‚¹å‡»æˆ–æ‹–åŠ¨ä¸Šä¼ å›¾ç‰‡</p>
+          <input type="file" id="image-input" accept="image/*" multiple>
+        </div>
+        <div class="image-preview-grid" id="image-preview"></div>
+      </div>
+      <div class="editor-actions">
+        <button class="btn-publish" onclick="publishPost()">${isEdit ? 'æ›´æ–°' : 'å‘å¸ƒ'}</button>
+        <button class="btn-cancel" onclick="showHome()">å–æ¶ˆ</button>
+        ${isEdit ? '<button class="btn-delete" onclick="deletePost(\'' + post.id + '\')" >åˆ é™¤</button>' : ''}
+      </div>
+    </div>
   `;
 }
 
 async function publishPost() {
-  if (!authenticated) { showToast('ÇëÏÈÅäÖÃ Token'); return; }
+  if (!authenticated) { showToast('è¯·é…ç½® Token'); return; }
   
   const titleInput = document.getElementById('post-title');
   const contentInput = document.getElementById('post-content');
   const title = titleInput.value.trim();
   const content = contentInput.value.trim();
 
-  if (!title) { showToast('ÇëÊäÈë±êÌâ'); titleInput.focus(); return; }
-  if (!content) { showToast('ÇëÊäÈëÄÚÈİ'); contentInput.focus(); return; }
-  if (content.length &gt; CONFIG.MAX_CONTENT_LENGTH) { 
-    showToast('ÄÚÈİ¹ı³¤£¬Çë¼õÉÙµ½ ' + Math.round(CONFIG.MAX_CONTENT_LENGTH / 1000) + 'KB ÒÔÄÚ'); 
+  if (!title) { showToast('è¯·è¾“å…¥æ ‡é¢˜'); titleInput.focus(); return; }
+  if (!content) { showToast('è¯·è¾“å…¥å†…å®¹'); contentInput.focus(); return; }
+  if (content.length > CONFIG.MAX_CONTENT_LENGTH) { 
+    showToast('å†…å®¹è¶…é™ï¼Œè¯·æ§åˆ¶åœ¨ ' + Math.round(CONFIG.MAX_CONTENT_LENGTH / 1000) + 'KB ä»¥å†…'); 
     return; 
   }
 
   const isEdit = !!window._editingPostId;
 
   if (isEdit) {
-    const idx = posts.findIndex(p =&gt; p.id === window._editingPostId);
-    if (idx &gt;= 0) {
+    const idx = posts.findIndex(p => p.id === window._editingPostId);
+    if (idx >= 0) {
       posts[idx].title = title;
       posts[idx].content = content;
       posts[idx].images = [...tempImages];
@@ -631,46 +685,46 @@ async function publishPost() {
   await savePosts();
   tempImages = [];
   window._editingPostId = null;
-  setTimeout(() =&gt; showHome(), 500);
+  setTimeout(() => showHome(), 500);
 }
 
 function renderDetail(postId) {
-  const post = posts.find(p =&gt; p.id === postId);
+  const post = posts.find(p => p.id === postId);
   if (!post) {
-    return `&lt;p&gt;Ìû×Ó²»´æÔÚ»òÒÑ±»É¾³ı¡£&lt;/p&gt;&lt;button class="back-btn" onclick="showHome()"&gt;¡û ·µ»ØÊ×Ò³&lt;/button&gt;`;
+    return `<p>æ–‡ç« ä¸å­˜åœ¨æˆ–å·²è¢«åˆ é™¤ã€‚</p><button class="back-btn" onclick="showHome()">â† è¿”å›åˆ—è¡¨</button>`;
   }
 
   const date = formatDateLong(post.createdAt);
-  const imagesHtml = (post.images &amp;&amp; post.images.length &gt; 0)
-    ? post.images.map(src =&gt; `&lt;img src="${src}" alt="" loading="lazy"&gt;`).join('')
+  const imagesHtml = (post.images && post.images.length > 0)
+    ? post.images.map(src => `<img src="${src}" alt="" loading="lazy">`).join('')
     : '';
 
   const editButtons = authenticated ? `
-    &lt;div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px;"&gt;
-      &lt;button class="btn-cancel" style="font-size:0.85rem;padding:6px 16px;" onclick="editPost('${post.id}')"&gt;?? ±à¼­&lt;/button&gt;
-      &lt;button class="btn-delete" style="font-size:0.85rem;padding:6px 16px;" onclick="deletePost('${post.id}')"&gt;? É¾³ı&lt;/button&gt;
-    &lt;/div&gt;
+    <div style="margin-top:32px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px;">
+      <button class="btn-cancel" style="font-size:0.85rem;padding:6px 16px;" onclick="editPost('${post.id}')">ğŸ“ ç¼–è¾‘</button>
+      <button class="btn-delete" style="font-size:0.85rem;padding:6px 16px;" onclick="deletePost('${post.id}')">ğŸ—‘ï¸ åˆ é™¤</button>
+    </div>
   ` : '';
 
   return `
-    &lt;div class="detail-page"&gt;
-      &lt;button class="back-btn" onclick="showHome()"&gt;¡û ·µ»ØÌû×ÓÁĞ±í&lt;/button&gt;
-      &lt;h1&gt;${escapeHtml(post.title)}&lt;/h1&gt;
-      &lt;div class="post-meta"&gt;
-        &lt;span&gt;${date}&lt;/span&gt;
-        ${post.images &amp;&amp; post.images.length &gt; 0 ? `&lt;span&gt;? ${post.images.length} ÕÅÍ¼&lt;/span&gt;` : ''}
-      &lt;/div&gt;
-      &lt;div class="detail-body"&gt;
-        &lt;p&gt;${escapeHtml(post.content).replace(/\n/g, '&lt;br&gt;')}&lt;/p&gt;
+    <div class="detail-page">
+      <button class="back-btn" onclick="showHome()">â† è¿”å›åˆ—è¡¨</button>
+      <h1>${escapeHtml(post.title)}</h1>
+      <div class="post-meta">
+        <span>ğŸ“… ${date}</span>
+        ${post.images && post.images.length > 0 ? `<span>ğŸ–¼ï¸ ${post.images.length} å¼ å›¾</span>` : ''}
+      </div>
+      <div class="detail-body">
+        <p>${escapeHtml(post.content).replace(/\n/g, '<br>')}</p>
         ${imagesHtml}
-      &lt;/div&gt;
+      </div>
       ${editButtons}
-    &lt;/div&gt;
+    </div>
   `;
 }
 
 function editPost(id) {
-  if (!authenticated) { showToast('ÇëÏÈÅäÖÃ Token'); return; }
+  if (!authenticated) { showToast('è¯·é…ç½® Token'); return; }
   window._editingPostId = id;
   tempImages = [];
   currentView = 'editor';
@@ -678,11 +732,11 @@ function editPost(id) {
 }
 
 async function deletePost(id) {
-  if (!authenticated) { showToast('ÇëÏÈÅäÖÃ Token'); return; }
-  if (!confirm('È·¶¨ÒªÉ¾³ıÕâÆªÌû×ÓÂğ£¿´Ë²Ù×÷²»¿É³·Ïú¡£')) return;
-  posts = posts.filter(p =&gt; p.id !== id);
+  if (!authenticated) { showToast('è¯·é…ç½® Token'); return; }
+  if (!confirm('ç¡®å®šè¦åˆ é™¤è¿™ç¯‡æ–‡ç« å—ï¼Ÿæ­¤æ“ä½œä¸å¯æ’¤é”€ã€‚')) return;
+  posts = posts.filter(p => p.id !== id);
   await savePosts();
-  showToast('ÒÑÉ¾³ı');
+  showToast('å·²åˆ é™¤');
   showHome();
 }
 
@@ -692,49 +746,49 @@ function initImageUpload() {
   const preview = document.getElementById('image-preview');
   if (!area || !input) return;
 
-  area.addEventListener('click', () =&gt; input.click());
-  area.addEventListener('dragover', e =&gt; { e.preventDefault(); area.style.borderColor = 'var(--accent)'; });
-  area.addEventListener('dragleave', () =&gt; { area.style.borderColor = ''; });
-  area.addEventListener('drop', e =&gt; {
+  area.addEventListener('click', () => input.click());
+  area.addEventListener('dragover', e => { e.preventDefault(); area.style.borderColor = 'var(--accent)'; });
+  area.addEventListener('dragleave', () => { area.style.borderColor = ''; });
+  area.addEventListener('drop', e => {
     e.preventDefault(); area.style.borderColor = '';
     handleFiles(e.dataTransfer.files);
   });
-  input.addEventListener('change', () =&gt; { handleFiles(input.files); input.value = ''; });
+  input.addEventListener('change', () => { handleFiles(input.files); input.value = ''; });
 
   async function handleFiles(files) {
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) {
-        showToast('Ö»Ö§³ÖÍ¼Æ¬ÎÄ¼ş');
+        showToast('åªæ”¯æŒå›¾ç‰‡æ–‡ä»¶');
         continue;
       }
-      if (file.size &gt; CONFIG.MAX_IMAGE_SIZE) { 
-        showToast('Í¼Æ¬²»ÄÜ³¬¹ı ' + Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024) + 'MB'); 
+      if (file.size > CONFIG.MAX_IMAGE_SIZE) { 
+        showToast('å›¾ç‰‡ä¸èƒ½è¶…è¿‡ ' + Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024) + 'MB'); 
         continue; 
       }
-      if (tempImages.length &gt;= CONFIG.MAX_IMAGES) { 
-        showToast('×î¶àÉÏ´« ' + CONFIG.MAX_IMAGES + ' ÕÅÍ¼Æ¬'); 
+      if (tempImages.length >= CONFIG.MAX_IMAGES) { 
+        showToast('æœ€å¤šä¸Šä¼  ' + CONFIG.MAX_IMAGES + ' å¼ å›¾ç‰‡'); 
         break; 
       }
       
       try {
-        showToast('ÕıÔÚÑ¹ËõÍ¼Æ¬...');
+        showToast('å‹ç¼©å›¾ç‰‡ä¸­...');
         const compressed = await compressImage(file);
         tempImages.push(compressed);
         renderPreviews();
-        showToast('Í¼Æ¬ÒÑÌí¼Ó');
+        showToast('å›¾ç‰‡å·²åŠ å…¥');
       } catch (err) {
         console.error('Compression failed:', err);
-        showToast('Í¼Æ¬Ñ¹ËõÊ§°Ü£¬ÇëÖØÊÔ');
+        showToast('å›¾ç‰‡å‹ç¼©å¤±è´¥ï¼Œè¯·é‡è¯•');
       }
     }
   }
 
   function renderPreviews() {
-    preview.innerHTML = tempImages.map((src, i) =&gt; `
-      &lt;div class="image-preview-item"&gt;
-        &lt;img src="${src}" alt=""&gt;
-        &lt;button class="remove-btn" onclick="removeImage(${i})"&gt;¡Á&lt;/button&gt;
-      &lt;/div&gt;
+    preview.innerHTML = tempImages.map((src, i) => `
+      <div class="image-preview-item">
+        <img src="${src}" alt="">
+        <button class="remove-btn" onclick="removeImage(${i})">âœ•</button>
+      </div>
     `).join('');
   }
 
@@ -747,17 +801,45 @@ function initImageUpload() {
 function initImagePreview() {
   const isEdit = !!window._editingPostId;
   if (!isEdit) return;
-  const post = posts.find(p =&gt; p.id === window._editingPostId);
+  const post = posts.find(p => p.id === window._editingPostId);
   if (!post || !post.images || post.images.length === 0) return;
 
   const grid = document.getElementById('image-preview');
   if (!grid) return;
-  grid.innerHTML = post.images.map((src, i) =&gt;
-    '&lt;div class="image-preview-item"&gt;' +
-    '&lt;img src="' + src + '" alt=""&gt;' +
-    '&lt;button class="remove-btn" onclick="window.removeImage(' + i + ')"&gt;¡Á&lt;/button&gt;' +
-    '&lt;/div&gt;'
+  grid.innerHTML = post.images.map((src, i) =>
+    '<div class="image-preview-item">' +
+    '<img src="' + src + '" alt="">' +
+    '<button class="remove-btn" onclick="window.removeImage(' + i + ')">âœ•</button>' +
+    '</div>'
   ).join('');
+}
+
+function updateHeaderButtons() {
+  const btnConfig = document.getElementById('btn-config');
+  const btnNewPost = document.getElementById('btn-new-post');
+  const btnLogout = document.getElementById('btn-logout');
+  
+  if (authenticated) {
+    btnConfig.style.display = 'block';
+    btnNewPost.style.display = 'block';
+    btnLogout.style.display = 'block';
+  } else {
+    btnConfig.style.display = 'none';
+    btnNewPost.style.display = 'none';
+    btnLogout.style.display = 'none';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('gh_blog_token');
+  token = '';
+  authenticated = false;
+  posts = [];
+  postsLoaded = false;
+  showingAuthSetup = false;
+  updateHeaderButtons();
+  showHome();
+  showToast('å·²é€€å‡º');
 }
 
 function escapeHtml(str) {
@@ -766,31 +848,38 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 function escapeAttr(str) {
-  return str.replace(/"/g, '&amp;quot;').replace(/'/g, '&amp;#39;');
+  return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 function formatDate(iso) {
   const d = new Date(iso);
   const now = new Date();
   const diff = now - d;
-  if (diff &lt; 60000) return '¸Õ¸Õ';
-  if (diff &lt; 3600000) return Math.floor(diff / 60000) + ' ·ÖÖÓÇ°';
-  if (diff &lt; 86400000) return Math.floor(diff / 3600000) + ' Ğ¡Ê±Ç°';
-  if (diff &lt; 604800000) return Math.floor(diff / 86400000) + ' ÌìÇ°';
+  if (diff < 60000) return 'åˆšåˆš';
+  if (diff < 3600000) return Math.floor(diff / 60000) + ' åˆ†é’Ÿå‰';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + ' å°æ—¶å‰';
+  if (diff < 604800000) return Math.floor(diff / 86400000) + ' å¤©å‰';
   return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
 }
 function formatDateLong(iso) {
   const d = new Date(iso);
-  return d.getFullYear() + ' Äê ' + (d.getMonth()+1) + ' ÔÂ ' + d.getDate() + ' ÈÕ ' +
+  return d.getFullYear() + ' å¹´ ' + (d.getMonth()+1) + ' æœˆ ' + d.getDate() + ' æ—¥ ' +
     String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
 }
 function showToast(msg) {
   const toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.classList.add('show');
-  setTimeout(() =&gt; toast.classList.remove('show'), 2500);
+  setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
+// åˆå§‹åŒ–
+window.addEventListener('DOMContentLoaded', async () => {
+  authenticated = !!token;
+  updateHeaderButtons();
+  await loadAndRender();
+});
+
 render();
-&lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;
+</script>
+</body>
+</html>

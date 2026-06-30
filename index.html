@@ -329,14 +329,7 @@ async function ghApi(method, path, body) {
 
 async function loadPosts() {
   try {
-    const apiUrl = `https://api.github.com/repos/${CONFIG.OWNER}/${CONFIG.REPO}/contents/${CONFIG.POSTS_FILE}?ref=${CONFIG.BRANCH}`;
-    const res = await fetch(apiUrl);
-    if (!res.ok) {
-      posts = [];
-      postsLoaded = true;
-      return;
-    }
-    const data = await res.json();
+    const data = await ghApi('GET', `/contents/${CONFIG.POSTS_FILE}?ref=${CONFIG.BRANCH}`);
     if (data.content) {
       const binary = atob(data.content);
       const bytes = new Uint8Array(binary.length);
@@ -349,6 +342,32 @@ async function loadPosts() {
     postsLoaded = true;
   } catch (e) {
     console.warn('Load posts failed:', e);
+    // 如果是 403/404 错误，尝试不用 Token 再试一次（兼容公开仓库）
+    if (e.message && (e.message.includes('403') || e.message.includes('404'))) {
+      try {
+        const apiUrl = `https://api.github.com/repos/${CONFIG.OWNER}/${CONFIG.REPO}/contents/${CONFIG.POSTS_FILE}?ref=${CONFIG.BRANCH}`;
+        const res = await fetch(apiUrl);
+        if (!res.ok) {
+          posts = [];
+          postsLoaded = true;
+          return;
+        }
+        const data = await res.json();
+        if (data.content) {
+          const binary = atob(data.content);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          const json = new TextDecoder('utf-8').decode(bytes);
+          posts = JSON.parse(json);
+        } else {
+          posts = [];
+        }
+        postsLoaded = true;
+        return;
+      } catch (e2) {
+        console.warn('Fallback load posts also failed:', e2);
+      }
+    }
     posts = [];
     postsLoaded = true;
   }

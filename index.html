@@ -368,7 +368,7 @@ function render() {
   const app = document.getElementById('app');
   if (currentView === 'editor') {
     app.innerHTML = renderEditor();
-    setTimeout(initImageUpload, 0);
+    setTimeout(() => { initImageUpload(); initImagePreview(); }, 50);
   } else if (currentView === 'detail') {
     app.innerHTML = renderDetail(window._currentPostId);
   } else {
@@ -554,18 +554,6 @@ function renderEditor() {
           <input type="file" id="image-input" accept="image/*" multiple>
         </div>
         <div class="image-preview-grid" id="image-preview"></div>
-      <script>
-        // 编辑模式下预渲染已有图片
-        if (${isEdit ? 'true' : 'false'} && post && post.images) {
-          const grid = document.getElementById('image-preview');
-          grid.innerHTML = post.images.map((src, i) =>
-            '<div class="image-preview-item">' +
-            '<img src="' + src + '" alt="">' +
-            '<button class="remove-btn" onclick="removeImage(' + i + ')">×</button>' +
-            '</div>'
-          ).join('');
-        }
-      <\/script>
       </div>
       <div class="editor-actions">
         <button class="btn-publish" onclick="publishPost()">${isEdit ? '更新' : '发布'}</button>
@@ -701,6 +689,23 @@ function initImageUpload() {
     tempImages.splice(index, 1);
     renderPreviews();
   };
+}
+
+// 编辑模式下预渲染已有图片
+function initImagePreview() {
+  const isEdit = !!window._editingPostId;
+  if (!isEdit) return;
+  const post = posts.find(p => p.id === window._editingPostId);
+  if (!post || !post.images || post.images.length === 0) return;
+
+  const grid = document.getElementById('image-preview');
+  if (!grid) return;
+  grid.innerHTML = post.images.map((src, i) =>
+    '<div class="image-preview-item">' +
+    '<img src="' + src + '" alt="">' +
+    '<button class="remove-btn" onclick="window.removeImage(' + i + ')">×</button>' +
+    '</div>'
+  ).join('');
 }
 
 // ========== Utilities ==========

@@ -529,6 +529,12 @@ async function saveToken() {
 function renderEditor() {
   const isEdit = !!window._editingPostId;
   const post = isEdit ? posts.find(p => p.id === window._editingPostId) : null;
+  // 编辑时预加载已有图片
+  if (isEdit && post && post.images) {
+    tempImages = [...post.images];
+  } else {
+    tempImages = [];
+  }
 
   return `
     <div class="editor-page">
@@ -548,6 +554,18 @@ function renderEditor() {
           <input type="file" id="image-input" accept="image/*" multiple>
         </div>
         <div class="image-preview-grid" id="image-preview"></div>
+      <script>
+        // 编辑模式下预渲染已有图片
+        if (${isEdit ? 'true' : 'false'} && post && post.images) {
+          const grid = document.getElementById('image-preview');
+          grid.innerHTML = post.images.map((src, i) =>
+            '<div class="image-preview-item">' +
+            '<img src="' + src + '" alt="">' +
+            '<button class="remove-btn" onclick="removeImage(' + i + ')">×</button>' +
+            '</div>'
+          ).join('');
+        }
+      <\/script>
       </div>
       <div class="editor-actions">
         <button class="btn-publish" onclick="publishPost()">${isEdit ? '更新' : '发布'}</button>
@@ -573,6 +591,7 @@ async function publishPost() {
     if (idx >= 0) {
       posts[idx].title = title;
       posts[idx].content = content;
+      // 编辑模式：tempImages 已经包含原有图片 + 新增图片
       posts[idx].images = [...tempImages];
     }
   } else {

@@ -1019,7 +1019,7 @@ function initImageUpload() {
             const sha = await uploadImageToRepo(file);
             const url = getImageUrl(sha);
             tempImages.push(url);
-            insertImageMarkdown(url, textarea);
+            insertImageIntoTextarea(url, textarea);
             renderPreviews();
             if (previewPane) {
               previewPane.innerHTML = renderMarkdown(textarea.value);
@@ -1098,6 +1098,19 @@ function initImageUpload() {
     }
     renderPreviews();
   };
+}
+
+function insertImageIntoTextarea(url, textarea) {
+  if (!textarea) return;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const imageMarkdown = '\n\n![图片](' + url + ')\n\n';
+  const newValue = text.slice(0, start) + imageMarkdown + text.slice(end);
+  textarea.value = newValue;
+  const cursorPos = start + imageMarkdown.length;
+  textarea.setSelectionRange(cursorPos, cursorPos);
+  textarea.focus();
 }
 
 function initImagePreview() {

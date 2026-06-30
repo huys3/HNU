@@ -325,39 +325,21 @@ async function savePosts() {
     const bytes = new TextEncoder().encode(json);
     const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
     const encoded = btoa(binary);
-    console.log('Saving posts, JSON length:', json.length, 'bytes, encoded length:', encoded.length);
-    console.log('Image count:', posts.reduce((s, p) => s + (p.images ? p.images.length : 0), 0));
 
-    // 先尝试获取当前 SHA
+    // 获取当前文件信息（用于 SHA）
     let sha = null;
     try {
       const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
       sha = data.sha;
     } catch (e) {
-      // 文件不存在
+      // 文件不存在，首次创建
     }
-
-    if (sha) {
-      // 文件存在，先删除再重建（避免 SHA 冲突）
-      await ghApi('DELETE', `/contents/${POSTS_FILE}`, {
-        message: 'Delete old posts.json',
-        sha: sha,
-        branch: BRANCH
-      });
-    }
-
-    // 重新获取（可能已被删除，也可能被其他人修改了）
-    let newSha = null;
-    try {
-      const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
-      newSha = data.sha;
-    } catch (e) {}
 
     await ghApi('PUT', `/contents/${POSTS_FILE}`, {
-      message: newSha ? 'Update blog posts' : 'Create blog posts',
+      message: sha ? 'Update blog posts' : 'Create blog posts',
       content: encoded,
       branch: BRANCH,
-      ...(newSha ? { sha: newSha } : {})
+      ...(sha ? { sha: sha } : {})
     });
     showToast('保存成功！');
   } catch (e) {
@@ -368,10 +350,15 @@ async function savePosts() {
 
 async function testToken() {
   try {
-    await ghApi('GET', '/user');
-    return true;
+    // 直接请求 GitHub API（不走 ghApi 因为 /user 是全局端点不是仓库路径）
+    const res = await fetch('https://api.github.com/user', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+      }
+    });
+    return res.ok;
   } catch {
-    // Fine-grained token 可能不支持 /user，返回 false
     return false;
   }
 }

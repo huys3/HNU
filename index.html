@@ -293,20 +293,21 @@ async function ghApi(method, path, body) {
 
 async function loadPosts() {
   try {
-    const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
-    if (data.content) {
-      // 使用 TextDecoder 正确处理 UTF-8 编码的中文
-      const binary = atob(data.content);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const json = new TextDecoder('utf-8').decode(bytes);
-      posts = JSON.parse(json);
-    } else {
+    // 直接用 raw.githubusercontent.com 读取，不需要 Token，不受 API 限速影响
+    const rawUrl = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${POSTS_FILE}`;
+    const res = await fetch(rawUrl);
+    if (!res.ok) {
+      // 文件不存在
       posts = [];
+      postsLoaded = true;
+      return;
     }
+    const text = await res.text();
+    posts = JSON.parse(text);
     postsLoaded = true;
   } catch (e) {
-    // 404 = 文件不存在, 403 = 速率限制, 都视为空帖子列表
+    // 任何错误都视为空列表
+    console.warn('Load posts failed:', e);
     posts = [];
     postsLoaded = true;
   }

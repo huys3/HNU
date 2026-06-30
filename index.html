@@ -887,7 +887,7 @@ function editorToMarkdown(editor) {
   html = html.replace(/\s*alt="[^"]*"/g, '');
 
   // Convert block-level tags to Markdown
-  html = html.replace(/<h([1-6)][^>]*>(.*?)<\/h\1>/gi, (_, level, content) => {
+  html = html.replace(/<h([1-6])[^>]*>(.*?)<\/h\1>/gi, (_, level, content) => {
     return '\n' + '#'.repeat(parseInt(level)) + ' ' + cleanHtml(content) + '\n\n';
   });
 

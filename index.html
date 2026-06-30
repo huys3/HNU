@@ -316,19 +316,29 @@ async function loadPosts() {
 async function savePosts() {
   if (!token) { showToast('请先配置 GitHub Token'); return; }
   try {
-    const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
-    const sha = data.sha;
+    let sha = null;
+    try {
+      const data = await ghApi('GET', `/contents/${POSTS_FILE}?ref=${BRANCH}`);
+      sha = data.sha;
+    } catch (e) {
+      // 文件不存在，首次创建
+      if (e.message.includes('404')) {
+        sha = null;
+      } else {
+        throw e;
+      }
+    }
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(posts, null, 2))));
     await ghApi('PUT', `/contents/${POSTS_FILE}`, {
-      message: postsLoaded ? 'Update blog posts' : 'Initialize blog posts',
+      message: sha ? 'Update blog posts' : 'Initialize blog posts',
       content: encoded,
       branch: BRANCH,
-      sha: sha
+      ...(sha ? { sha: sha } : {})
     });
     showToast('保存成功！');
   } catch (e) {
     console.error('Save posts failed:', e);
-    showToast('保存失败：' + e.message.split(':')[0]);
+    showToast('保存失败：' + e.message);
   }
 }
 

@@ -394,6 +394,15 @@ async function loadPosts() {
   }
 }
 
+async function getPostsFileSha() {
+  try {
+    const data = await ghApi('GET', `/contents/${CONFIG.POSTS_FILE}?ref=${CONFIG.BRANCH}`);
+    return data.sha;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function savePosts() {
   if (!token || !authenticated) { showToast('请配置 GitHub Token'); return; }
   try {
@@ -402,19 +411,34 @@ async function savePosts() {
     const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
     const encoded = btoa(binary);
 
-    let sha = null;
+    let sha = await getPostsFileSha();
+    let retry = false;
+
+    const doSave = async () => {
+      await ghApi('PUT', `/contents/${CONFIG.POSTS_FILE}`, {
+        message: sha ? 'Update blog posts' : 'Create blog posts',
+        content: encoded,
+        branch: CONFIG.BRANCH,
+        ...(sha ? { sha: sha } : {})
+      });
+    };
+
     try {
-      const data = await ghApi('GET', `/contents/${CONFIG.POSTS_FILE}?ref=${CONFIG.BRANCH}`);
-      sha = data.sha;
+      await doSave();
     } catch (e) {
+      if (!retry && e.message.includes('409')) {
+        retry = true;
+        sha = await getPostsFileSha();
+        if (sha) {
+          await doSave();
+        } else {
+          throw e;
+        }
+      } else {
+        throw e;
+      }
     }
 
-    await ghApi('PUT', `/contents/${CONFIG.POSTS_FILE}`, {
-      message: sha ? 'Update blog posts' : 'Create blog posts',
-      content: encoded,
-      branch: CONFIG.BRANCH,
-      ...(sha ? { sha: sha } : {})
-    });
     showToast('保存成功！');
   } catch (e) {
     console.error('Save posts failed:', e);

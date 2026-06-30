@@ -808,7 +808,7 @@ function renderEditor() {
         <div class="editor-split">
           <div class="editor-pane">
             <div class="editor-pane-label">Markdown 源码</div>
-            <textarea id="post-content" placeholder="支持 Markdown 语法，例如 # 标题、**加粗**、- 列表，上传图片可在右侧实时预览" maxlength="${CONFIG.MAX_CONTENT_LENGTH}">${isEdit ? escapeHtml(post.content) : ''}</textarea>
+            <textarea id="post-content" placeholder="支持 Markdown 语法，例如 # 标题、**加粗**、- 列表，Ctrl+V 粘贴图片" maxlength="${CONFIG.MAX_CONTENT_LENGTH}">${isEdit ? escapeHtml(post.content) : ''}</textarea>
           </div>
           <div class="editor-pane">
             <div class="editor-pane-label">实时预览</div>
@@ -817,9 +817,9 @@ function renderEditor() {
         </div>
       </div>
       <div class="form-group">
-        <label>配图(选填，最多 ${CONFIG.MAX_IMAGES} 张，每张 ≤ ${Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024)}MB，自动压缩)</label>
+        <label>配图(选填，最多 ${CONFIG.MAX_IMAGES} 张，每张 ≤ ${Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024)}MB，自动上传到仓库)</label>
         <div class="image-upload-area" id="upload-area">
-          <p>点击或拖动上传图片（图片将插入到光标位置）</p>
+          <p>点击或拖动上传图片（也可在源码区 Ctrl+V 粘贴截图）</p>
           <input type="file" id="image-input" accept="image/*" multiple>
         </div>
         <div class="image-preview-grid" id="image-preview"></div>
@@ -956,6 +956,32 @@ async function deletePost(id) {
   showHome();
 }
 
+async function uploadImageToRepo(file) {
+  // Compress first
+  const compressed = await compressImage(file);
+  const bytes = atob(compressed.split(',')[1]);
+  const arr = new Uint8Array(bytes);
+  const mime = compressed.split(',')[0].match(/:(.*?);/)[1];
+
+  const filename = 'images/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+
+  try {
+    const data = await ghApi('PUT', `/contents/${filename}`, {
+      message: 'Add image: ' + filename,
+      content: compressed.split(',')[1],
+      branch: CONFIG.BRANCH
+    });
+    return data.content.sha;
+  } catch (e) {
+    console.error('Upload failed:', e);
+    throw e;
+  }
+}
+
+function getImageUrl(sha) {
+  return `https://raw.githubusercontent.com/${CONFIG.OWNER}/${CONFIG.REPO}/${CONFIG.BRANCH}/${sha}`;
+}
+
 function initImageUpload() {
   const area = document.getElementById('upload-area');
   const input = document.getElementById('image-input');
@@ -968,6 +994,44 @@ function initImageUpload() {
   if (textarea && previewPane) {
     textarea.addEventListener('input', () => {
       previewPane.innerHTML = renderMarkdown(textarea.value);
+    });
+  }
+
+  // Paste handler on textarea: detect images in clipboard
+  if (textarea) {
+    textarea.addEventListener('paste', async (e) => {
+      const items = e.clipboardData.items;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (!file) continue;
+          if (file.size > CONFIG.MAX_IMAGE_SIZE) {
+            showToast('图片不能超过 ' + Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024) + 'MB');
+            continue;
+          }
+          if (tempImages.length >= CONFIG.MAX_IMAGES) {
+            showToast('最多上传 ' + CONFIG.MAX_IMAGES + ' 张图片');
+            break;
+          }
+          try {
+            showToast('上传图片中...');
+            const sha = await uploadImageToRepo(file);
+            const url = getImageUrl(sha);
+            tempImages.push(url);
+            insertImageMarkdown(url, textarea);
+            renderPreviews();
+            if (previewPane) {
+              previewPane.innerHTML = renderMarkdown(textarea.value);
+            }
+            showToast('图片已上传');
+          } catch (err) {
+            console.error('Upload failed:', err);
+            showToast('图片上传失败，请重试');
+          }
+          break; // only handle first image in clipboard
+        }
+      }
     });
   }
 
@@ -996,27 +1060,27 @@ function initImageUpload() {
       }
 
       try {
-        showToast('压缩图片中...');
-        const compressed = await compressImage(file);
-        tempImages.push(compressed);
-        insertImageMarkdown(compressed, textarea);
+        showToast('上传图片中...');
+        const sha = await uploadImageToRepo(file);
+        const url = getImageUrl(sha);
+        tempImages.push(url);
+        insertImageMarkdown(url, textarea);
         renderPreviews();
-        // Update live preview after inserting image
         if (textarea && previewPane) {
           previewPane.innerHTML = renderMarkdown(textarea.value);
         }
-        showToast('图片已插入正文');
+        showToast('图片已上传');
       } catch (err) {
-        console.error('Compression failed:', err);
-        showToast('图片压缩失败，请重试');
+        console.error('Upload failed:', err);
+        showToast('图片上传失败，请重试');
       }
     }
   }
 
   function renderPreviews() {
-    preview.innerHTML = tempImages.map((src, i) => `
+    preview.innerHTML = tempImages.map((url, i) => `
       <div class="image-preview-item">
-        <img src="${src}" alt="">
+        <img src="${url}" alt="">
         <button class="remove-btn" onclick="removeImage(${i})">✕</button>
       </div>
     `).join('');
@@ -1026,7 +1090,7 @@ function initImageUpload() {
     tempImages.splice(index, 1);
     // Remove corresponding markdown from textarea and update preview
     if (textarea) {
-      const imageMdRegex = /\n\n!\[图片\]\(data:image\/[^)]+\)\n\n$/;
+      const imageMdRegex = /\n\n!\[图片\]\([^)]+\)\n\n$/;
       textarea.value = textarea.value.replace(imageMdRegex, '');
       if (previewPane) {
         previewPane.innerHTML = renderMarkdown(textarea.value);
@@ -1036,32 +1100,31 @@ function initImageUpload() {
   };
 }
 
-function insertImageMarkdown(src, textarea) {
-  if (!textarea) return;
-
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const text = textarea.value;
-  const imageMarkdown = `\n\n![图片](${src})\n\n`;
-  const newValue = text.slice(0, start) + imageMarkdown + text.slice(end);
-
-  textarea.value = newValue;
-  const cursorPos = start + imageMarkdown.length;
-  textarea.setSelectionRange(cursorPos, cursorPos);
-  textarea.focus();
-}
-
 function initImagePreview() {
   const isEdit = !!window._editingPostId;
   if (!isEdit) return;
   const post = posts.find(p => p.id === window._editingPostId);
   if (!post || !post.images || post.images.length === 0) return;
 
+  // Restore images to tempImages and textarea
+  tempImages = [...post.images];
+
+  // Re-insert image markdowns into textarea
+  const textarea = document.getElementById('post-content');
+  const previewPane = document.getElementById('editor-preview');
+  if (textarea) {
+    const imageMarkdowns = post.images.map(url => '\n\n![图片](' + url + ')\n\n');
+    textarea.value += imageMarkdowns.join('');
+    if (previewPane) {
+      previewPane.innerHTML = renderMarkdown(textarea.value);
+    }
+  }
+
   const grid = document.getElementById('image-preview');
   if (!grid) return;
-  grid.innerHTML = post.images.map((src, i) =>
+  grid.innerHTML = tempImages.map((url, i) =>
     '<div class="image-preview-item">' +
-    '<img src="' + src + '" alt="">' +
+    '<img src="' + url + '" alt="">' +
     '<button class="remove-btn" onclick="window.removeImage(' + i + ')">✕</button>' +
     '</div>'
   ).join('');

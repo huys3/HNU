@@ -394,46 +394,69 @@ async function loadPosts() {
   }
 }
 
-async function getPostsFileSha() {
+async function fetchRemotePostsWithSha() {
   try {
     const data = await ghApi('GET', `/contents/${CONFIG.POSTS_FILE}?ref=${CONFIG.BRANCH}`);
-    return data.sha;
+    const binary = atob(data.content || '');
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const json = new TextDecoder('utf-8').decode(bytes);
+    const remotePosts = JSON.parse(json || '[]');
+    return { sha: data.sha, posts: remotePosts };
   } catch (e) {
-    return null;
+    return { sha: null, posts: [] };
   }
+}
+
+function mergePosts(remotePosts, localPosts) {
+  const merged = remotePosts.map(remote => {
+    const local = localPosts.find(p => p.id === remote.id);
+    return local || remote;
+  });
+  localPosts.forEach(local => {
+    if (!remotePosts.some(remote => remote.id === local.id)) {
+      merged.push(local);
+    }
+  });
+  return merged;
 }
 
 async function savePosts() {
   if (!token || !authenticated) { showToast('请配置 GitHub Token'); return; }
   try {
-    const json = JSON.stringify(posts, null, 2);
-    const bytes = new TextEncoder().encode(json);
-    const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
-    const encoded = btoa(binary);
+    let json = JSON.stringify(posts, null, 2);
+    const encodePayload = (text) => {
+      const bytes = new TextEncoder().encode(text);
+      const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
+      return btoa(binary);
+    };
+    let encoded = encodePayload(json);
 
-    let sha = await getPostsFileSha();
-    let retry = false;
+    let { sha, posts: remotePosts } = await fetchRemotePostsWithSha();
+    if (remotePosts.length && posts.length && !sha) {
+      throw new Error('无法读取远程 posts.json 的 SHA');
+    }
 
-    const doSave = async () => {
+    const doSave = async (currentSha) => {
       await ghApi('PUT', `/contents/${CONFIG.POSTS_FILE}`, {
-        message: sha ? 'Update blog posts' : 'Create blog posts',
+        message: currentSha ? 'Update blog posts' : 'Create blog posts',
         content: encoded,
         branch: CONFIG.BRANCH,
-        ...(sha ? { sha: sha } : {})
+        ...(currentSha ? { sha: currentSha } : {})
       });
     };
 
     try {
-      await doSave();
+      await doSave(sha);
     } catch (e) {
-      if (!retry && e.message.includes('409')) {
-        retry = true;
-        sha = await getPostsFileSha();
-        if (sha) {
-          await doSave();
-        } else {
-          throw e;
-        }
+      if (e.message.includes('409')) {
+        const latest = await fetchRemotePostsWithSha();
+        if (!latest.sha) throw e;
+        const mergedPosts = mergePosts(latest.posts || [], posts);
+        posts = mergedPosts;
+        json = JSON.stringify(posts, null, 2);
+        encoded = encodePayload(json);
+        await doSave(latest.sha);
       } else {
         throw e;
       }

@@ -161,6 +161,42 @@
   }
   
   .editor-actions { display: flex; gap: 10px; margin-top: 24px; }
+
+  .editor-split { display: flex; gap: 16px; margin-bottom: 8px; }
+  .editor-pane {
+    flex: 1; display: flex; flex-direction: column;
+  }
+  .editor-pane-label {
+    font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;
+  }
+  .editor-pane textarea {
+    width: 100%; min-height: 360px; padding: 12px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 0.95rem; font-family: inherit; line-height: 1.6;
+    resize: vertical; transition: border-color 0.2s; background: var(--card-bg); color: var(--text);
+  }
+  .editor-pane textarea:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  .editor-preview {
+    flex: 1; min-height: 360px; padding: 12px 14px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--card-bg); color: var(--text);
+    font-size: 1.02rem; line-height: 1.85; white-space: pre-wrap; word-break: break-word;
+    overflow-y: auto;
+  }
+  .editor-preview img {
+    max-width: 100%; border-radius: 8px; box-shadow: var(--shadow); margin: 8px 0;
+  }
+  .editor-preview pre {
+    background: #f5f7fb; padding: 14px; border-radius: 8px; overflow-x: auto;
+    font-size: 0.92rem; margin: 12px 0;
+  }
+  .editor-preview code {
+    background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.92em;
+  }
+  .editor-preview blockquote {
+    border-left: 4px solid var(--accent); padding-left: 12px; color: var(--text-secondary); margin: 12px 0;
+  }
   .btn-publish {
     background: var(--accent); color: #fff; border: none; padding: 10px 28px;
     border-radius: 8px; font-size: 0.95rem; cursor: pointer; font-weight: 600;
@@ -298,6 +334,8 @@
     .detail-page h1 { font-size: 1.4rem; }
     .image-preview-item { width: 80px; height: 80px; }
     .header-actions { flex-wrap: wrap; }
+    .editor-split { flex-direction: column; }
+    .editor-pane textarea, .editor-preview { min-height: 240px; }
   }
   
   .hidden { display: none !important; }
@@ -741,8 +779,16 @@ function renderEditor() {
         <input type="text" id="post-title" placeholder="输入文章标题..." maxlength="100" value="${isEdit ? escapeAttr(post.title) : ''}">
       </div>
       <div class="form-group">
-        <label for="post-content">内容 (约 ${Math.round(CONFIG.MAX_CONTENT_LENGTH / 1000)}KB)</label>
-        <textarea id="post-content" placeholder="支持 Markdown 语法，例如 # 标题、**加粗**、- 列表，点击图片区可插入内联图片" maxlength="${CONFIG.MAX_CONTENT_LENGTH}">${isEdit ? escapeHtml(post.content) : ''}</textarea>
+        <div class="editor-split">
+          <div class="editor-pane">
+            <div class="editor-pane-label">Markdown 源码</div>
+            <textarea id="post-content" placeholder="支持 Markdown 语法，例如 # 标题、**加粗**、- 列表，上传图片可在右侧实时预览" maxlength="${CONFIG.MAX_CONTENT_LENGTH}">${isEdit ? escapeHtml(post.content) : ''}</textarea>
+          </div>
+          <div class="editor-pane">
+            <div class="editor-pane-label">实时预览</div>
+            <div class="editor-preview" id="editor-preview">${isEdit ? renderMarkdown(post.content) : ''}</div>
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label>配图(选填，最多 ${CONFIG.MAX_IMAGES} 张，每张 ≤ ${Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024)}MB，自动压缩)</label>
@@ -874,7 +920,16 @@ function initImageUpload() {
   const area = document.getElementById('upload-area');
   const input = document.getElementById('image-input');
   const preview = document.getElementById('image-preview');
+  const textarea = document.getElementById('post-content');
+  const previewPane = document.getElementById('editor-preview');
   if (!area || !input) return;
+
+  // Live preview: sync textarea content to preview pane on input
+  if (textarea && previewPane) {
+    textarea.addEventListener('input', () => {
+      previewPane.innerHTML = renderMarkdown(textarea.value);
+    });
+  }
 
   area.addEventListener('click', () => input.click());
   area.addEventListener('dragover', e => { e.preventDefault(); area.style.borderColor = 'var(--accent)'; });
@@ -891,11 +946,11 @@ function initImageUpload() {
         showToast('只支持图片文件');
         continue;
       }
-      if (file.size > CONFIG.MAX_IMAGE_SIZE) { 
-        showToast('图片不能超过 ' + Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024) + 'MB'); 
-        continue; 
+      if (file.size > CONFIG.MAX_IMAGE_SIZE) {
+        showToast('图片不能超过 ' + Math.round(CONFIG.MAX_IMAGE_SIZE / 1024 / 1024) + 'MB');
+        continue;
       }
-      if (tempImages.length >= CONFIG.MAX_IMAGES) { 
+      if (tempImages.length >= CONFIG.MAX_IMAGES) {
         showToast('最多上传 ' + CONFIG.MAX_IMAGES + ' 张图片');
         break;
       }
@@ -906,6 +961,10 @@ function initImageUpload() {
         tempImages.push(compressed);
         insertImageMarkdown(compressed);
         renderPreviews();
+        // Update live preview after inserting image
+        if (textarea && previewPane) {
+          previewPane.innerHTML = renderMarkdown(textarea.value);
+        }
         showToast('图片已插入正文');
       } catch (err) {
         console.error('Compression failed:', err);
@@ -925,6 +984,16 @@ function initImageUpload() {
 
   window.removeImage = function(index) {
     tempImages.splice(index, 1);
+    renderPreviews();
+    // Also remove corresponding markdown from textarea and update preview
+    if (textarea) {
+      // Remove the last inserted image markdown
+      const imageMdRegex = /\n\n!\[图片\]\(data:image\/[^)]+\)\n\n$/;
+      textarea.value = textarea.value.replace(imageMdRegex, '');
+      if (previewPane) {
+        previewPane.innerHTML = renderMarkdown(textarea.value);
+      }
+    }
     renderPreviews();
   };
 }
